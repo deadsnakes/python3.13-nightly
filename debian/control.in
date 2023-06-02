@@ -242,16 +242,6 @@ Description: GNU dbm database support for Python (version @VER@ debug extension)
  .
  This package contains the extensions built for the Python debug interpreter.
 
-Package: @PVER@-lib2to3
-Architecture: all
-Multi-Arch: foreign
-Priority: optional
-Depends: ${python:Depends}, ${misc:Depends}
-Provides: ${python:Provides}
-Description: lib2to3 package for Python (version @VER@)
-  Lib2to3 package for Python (version @VER@).  This package contains the
-  lib2to3 module from the Python standard library.
-
 Package: @PVER@-full
 Architecture: any
 Multi-Arch: allowed
@@ -260,7 +250,6 @@ Depends: @PVER@ (= ${binary:Version}),
   @PVER@-venv (= ${binary:Version}),
   idle-@PVER@,
   @PVER@-gdbm,
-  @PVER@-lib2to3,
   @PVER@-tk,
   ca-certificates,
   ${shlibs:Depends}, ${misc:Depends}

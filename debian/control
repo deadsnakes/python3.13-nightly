@@ -242,16 +242,6 @@ Description: GNU dbm database support for Python (version 3.13 debug extension)
  .
  This package contains the extensions built for the Python debug interpreter.
 
-Package: python3.13-lib2to3
-Architecture: all
-Multi-Arch: foreign
-Priority: optional
-Depends: ${python:Depends}, ${misc:Depends}
-Provides: ${python:Provides}
-Description: lib2to3 package for Python (version 3.13)
-  Lib2to3 package for Python (version 3.13).  This package contains the
-  lib2to3 module from the Python standard library.
-
 Package: python3.13-full
 Architecture: any
 Multi-Arch: allowed
@@ -260,7 +250,6 @@ Depends: python3.13 (= ${binary:Version}),
   python3.13-venv (= ${binary:Version}),
   idle-python3.13,
   python3.13-gdbm,
-  python3.13-lib2to3,
   python3.13-tk,
   ca-certificates,
   ${shlibs:Depends}, ${misc:Depends}
