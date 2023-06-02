@@ -10,7 +10,6 @@ disable-sem-check.diff
 lib-argparse.diff
 ctypes-arm.diff
 multiarch.diff
-lib2to3-no-pickled-grammar.diff
 test-no-random-order.diff
 tempfile-minimal.diff
 reproducible-buildinfo.diff
