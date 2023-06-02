@@ -1,0 +1,13 @@
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '45 8 * * *'
+
+jobs:
+  main:
+    uses: deadsnakes/runbooks/.github/workflows/update-nightly.yml@main
+    with:
+      dists-json: '["focal", "jammy"]'
+      version: 3.13
+    secrets: inherit
