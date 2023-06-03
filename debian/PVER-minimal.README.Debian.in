@@ -149,7 +149,6 @@ are:
   typing		module
   unicodedata		extension
   urllib		package
-  uu			module
   warnings		module
   weakref		module
   zipfile		package
