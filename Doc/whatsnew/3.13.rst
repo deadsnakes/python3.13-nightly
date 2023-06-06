@@ -113,6 +113,13 @@ pathlib
   :meth:`~pathlib.Path.rglob`.
   (Contributed by Barney Gale in :gh:`77609`.)
 
+traceback
+---------
+
+* Add *show_group* paramter to :func:`traceback.TracebackException.format_exception_only`
+  to format the nested exceptions of a :exc:`BaseExceptionGroup` instance, recursively.
+  (Contributed by Irit Katriel in :gh:`105292`.)
+
 Optimizations
 =============
 
@@ -343,6 +350,15 @@ Build Changes
   :file:`!configure`.
   (Contributed by Christian Heimes in :gh:`89886`.)
 
+* C extensions built with the :ref:`limited C API <limited-c-api>`
+  on :ref:`Python build in debug mode <debug-build>` no longer support Python
+  3.9 and older. In this configuration, :c:func:`Py_INCREF` and
+  :c:func:`Py_DECREF` are now always implemented as opaque function calls,
+  but the called functions were added to Python 3.10. Build C extensions
+  with a release build of Python or with Python 3.12 and older, to keep support
+  for Python 3.9 and older.
+  (Contributed by Victor Stinner in :gh:`102304`.)
+
 
 C API Changes
 =============
@@ -473,3 +489,10 @@ Removed
   * or :c:func:`PyGILState_Ensure` and :c:func:`PyGILState_Release`.
 
   (Contributed by Victor Stinner in :gh:`105182`.)
+
+* Remove the old private, undocumented and untested ``_PyGC_FINALIZED()`` macro
+  which was kept for backward compatibility with Python 3.8 and older: use
+  :c:func:`PyObject_GC_IsFinalized()` instead. The `pythoncapi-compat project
+  <https://github.com/python/pythoncapi-compat/>`_ can be used to get this
+  function on Python 3.8 and older.
+  (Contributed by Victor Stinner in :gh:`105268`.)
