@@ -7,7 +7,7 @@ Subject: actually, don't require autoconf 2.71
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/configure.ac b/configure.ac
-index 65b6283..ff0bd83 100644
+index 51a9149..a913788 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -15,7 +15,7 @@ dnl
