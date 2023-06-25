@@ -30,6 +30,7 @@ are:
   _locale		extension
   _md5			extension
   _opcode		extension
+  _opcode_metadata	module
   _operator		extension
   _pickle		extension
   _posixsubprocess	extension
