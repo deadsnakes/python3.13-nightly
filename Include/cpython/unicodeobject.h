@@ -394,11 +394,6 @@ static inline int PyUnicode_READY(PyObject* Py_UNUSED(op))
 }
 #define PyUnicode_READY(op) PyUnicode_READY(_PyObject_CAST(op))
 
-/* Get a copy of a Unicode string. */
-PyAPI_FUNC(PyObject*) _PyUnicode_Copy(
-    PyObject *unicode
-    );
-
 /* Copy character from one unicode object into another, this function performs
    character conversion when necessary and falls back to memcpy() if possible.
 
@@ -425,17 +420,6 @@ PyAPI_FUNC(Py_ssize_t) PyUnicode_CopyCharacters(
     Py_ssize_t how_many
     );
 
-/* Unsafe version of PyUnicode_CopyCharacters(): don't check arguments and so
-   may crash if parameters are invalid (e.g. if the output string
-   is too short). */
-PyAPI_FUNC(void) _PyUnicode_FastCopyCharacters(
-    PyObject *to,
-    Py_ssize_t to_start,
-    PyObject *from,
-    Py_ssize_t from_start,
-    Py_ssize_t how_many
-    );
-
 /* Fill a string with a character: write fill_char into
    unicode[start:start+length].
 
@@ -451,34 +435,12 @@ PyAPI_FUNC(Py_ssize_t) PyUnicode_Fill(
     Py_UCS4 fill_char
     );
 
-/* Unsafe version of PyUnicode_Fill(): don't check arguments and so may crash
-   if parameters are invalid (e.g. if length is longer than the string). */
-PyAPI_FUNC(void) _PyUnicode_FastFill(
-    PyObject *unicode,
-    Py_ssize_t start,
-    Py_ssize_t length,
-    Py_UCS4 fill_char
-    );
-
 /* Create a new string from a buffer of Py_UCS1, Py_UCS2 or Py_UCS4 characters.
    Scan the string to find the maximum character. */
 PyAPI_FUNC(PyObject*) PyUnicode_FromKindAndData(
     int kind,
     const void *buffer,
     Py_ssize_t size);
-
-/* Create a new string from a buffer of ASCII characters.
-   WARNING: Don't check if the string contains any non-ASCII character. */
-PyAPI_FUNC(PyObject*) _PyUnicode_FromASCII(
-    const char *buffer,
-    Py_ssize_t size);
-
-/* Compute the maximum character of the substring unicode[start:end].
-   Return 127 for an empty string. */
-PyAPI_FUNC(Py_UCS4) _PyUnicode_FindMaxChar (
-    PyObject *unicode,
-    Py_ssize_t start,
-    Py_ssize_t end);
 
 /* --- Manage the default encoding ---------------------------------------- */
 
@@ -499,112 +461,6 @@ PyAPI_FUNC(const char *) PyUnicode_AsUTF8(PyObject *unicode);
 
 #define _PyUnicode_AsString PyUnicode_AsUTF8
 
-/* --- UTF-7 Codecs ------------------------------------------------------- */
-
-PyAPI_FUNC(PyObject*) _PyUnicode_EncodeUTF7(
-    PyObject *unicode,          /* Unicode object */
-    int base64SetO,             /* Encode RFC2152 Set O characters in base64 */
-    int base64WhiteSpace,       /* Encode whitespace (sp, ht, nl, cr) in base64 */
-    const char *errors          /* error handling */
-    );
-
-/* --- UTF-8 Codecs ------------------------------------------------------- */
-
-PyAPI_FUNC(PyObject*) _PyUnicode_AsUTF8String(
-    PyObject *unicode,
-    const char *errors);
-
-/* --- UTF-32 Codecs ------------------------------------------------------ */
-
-PyAPI_FUNC(PyObject*) _PyUnicode_EncodeUTF32(
-    PyObject *object,           /* Unicode object */
-    const char *errors,         /* error handling */
-    int byteorder               /* byteorder to use 0=BOM+native;-1=LE,1=BE */
-    );
-
-/* --- UTF-16 Codecs ------------------------------------------------------ */
-
-/* Returns a Python string object holding the UTF-16 encoded value of
-   the Unicode data.
-
-   If byteorder is not 0, output is written according to the following
-   byte order:
-
-   byteorder == -1: little endian
-   byteorder == 0:  native byte order (writes a BOM mark)
-   byteorder == 1:  big endian
-
-   If byteorder is 0, the output string will always start with the
-   Unicode BOM mark (U+FEFF). In the other two modes, no BOM mark is
-   prepended.
-*/
-PyAPI_FUNC(PyObject*) _PyUnicode_EncodeUTF16(
-    PyObject* unicode,          /* Unicode object */
-    const char *errors,         /* error handling */
-    int byteorder               /* byteorder to use 0=BOM+native;-1=LE,1=BE */
-    );
-
-/* --- Unicode-Escape Codecs ---------------------------------------------- */
-
-/* Variant of PyUnicode_DecodeUnicodeEscape that supports partial decoding. */
-PyAPI_FUNC(PyObject*) _PyUnicode_DecodeUnicodeEscapeStateful(
-        const char *string,     /* Unicode-Escape encoded string */
-        Py_ssize_t length,      /* size of string */
-        const char *errors,     /* error handling */
-        Py_ssize_t *consumed    /* bytes consumed */
-);
-/* Helper for PyUnicode_DecodeUnicodeEscape that detects invalid escape
-   chars. */
-PyAPI_FUNC(PyObject*) _PyUnicode_DecodeUnicodeEscapeInternal(
-        const char *string,     /* Unicode-Escape encoded string */
-        Py_ssize_t length,      /* size of string */
-        const char *errors,     /* error handling */
-        Py_ssize_t *consumed,   /* bytes consumed */
-        const char **first_invalid_escape  /* on return, points to first
-                                              invalid escaped char in
-                                              string. */
-);
-
-/* --- Raw-Unicode-Escape Codecs ---------------------------------------------- */
-
-/* Variant of PyUnicode_DecodeRawUnicodeEscape that supports partial decoding. */
-PyAPI_FUNC(PyObject*) _PyUnicode_DecodeRawUnicodeEscapeStateful(
-        const char *string,     /* Unicode-Escape encoded string */
-        Py_ssize_t length,      /* size of string */
-        const char *errors,     /* error handling */
-        Py_ssize_t *consumed    /* bytes consumed */
-);
-
-/* --- Latin-1 Codecs ----------------------------------------------------- */
-
-PyAPI_FUNC(PyObject*) _PyUnicode_AsLatin1String(
-    PyObject* unicode,
-    const char* errors);
-
-/* --- ASCII Codecs ------------------------------------------------------- */
-
-PyAPI_FUNC(PyObject*) _PyUnicode_AsASCIIString(
-    PyObject* unicode,
-    const char* errors);
-
-/* --- Character Map Codecs ----------------------------------------------- */
-
-/* Translate an Unicode object by applying a character mapping table to
-   it and return the resulting Unicode object.
-
-   The mapping table must map Unicode ordinal integers to Unicode strings,
-   Unicode ordinal integers or None (causing deletion of the character).
-
-   Mapping tables may be dictionaries or sequences. Unmapped character
-   ordinals (ones which cause a LookupError) are left untouched and
-   are copied as-is.
-*/
-PyAPI_FUNC(PyObject*) _PyUnicode_EncodeCharmap(
-    PyObject *unicode,          /* Unicode object */
-    PyObject *mapping,          /* encoding mapping */
-    const char *errors          /* error handling */
-    );
-
 /* --- Decimal Encoder ---------------------------------------------------- */
 
 /* Coverts a Unicode object holding a decimal value to an ASCII string
@@ -616,37 +472,6 @@ PyAPI_FUNC(PyObject*) _PyUnicode_EncodeCharmap(
 
 PyAPI_FUNC(PyObject*) _PyUnicode_TransformDecimalAndSpaceToASCII(
     PyObject *unicode           /* Unicode object */
-    );
-
-/* --- Methods & Slots ---------------------------------------------------- */
-
-PyAPI_FUNC(PyObject *) _PyUnicode_JoinArray(
-    PyObject *separator,
-    PyObject *const *items,
-    Py_ssize_t seqlen
-    );
-
-/* Test whether a unicode is equal to ASCII identifier.  Return 1 if true,
-   0 otherwise.  The right argument must be ASCII identifier.
-   Any error occurs inside will be cleared before return. */
-PyAPI_FUNC(int) _PyUnicode_EqualToASCIIId(
-    PyObject *left,             /* Left string */
-    _Py_Identifier *right       /* Right identifier */
-    );
-
-/* Test whether a unicode is equal to ASCII string.  Return 1 if true,
-   0 otherwise.  The right argument must be ASCII-encoded string.
-   Any error occurs inside will be cleared before return. */
-PyAPI_FUNC(int) _PyUnicode_EqualToASCIIString(
-    PyObject *left,
-    const char *right           /* ASCII-encoded string */
-    );
-
-/* Externally visible for str.strip(unicode) */
-PyAPI_FUNC(PyObject *) _PyUnicode_XStrip(
-    PyObject *self,
-    int striptype,
-    PyObject *sepobj
     );
 
 /* === Characters Type APIs =============================================== */
