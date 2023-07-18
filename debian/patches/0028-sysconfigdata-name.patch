@@ -15,7 +15,7 @@ Forwarded: no
  3 files changed, 6 insertions(+), 4 deletions(-)
 
 diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py
-index 8d0f5fc..8ca8f83 100644
+index 5d108a3..05b4ad7 100644
 --- a/Lib/sysconfig.py
 +++ b/Lib/sysconfig.py
 @@ -501,7 +501,7 @@ def _get_sysconfigdata_name():
@@ -26,7 +26,7 @@ index 8d0f5fc..8ca8f83 100644
 +        f'_sysconfigdata_{sys.abiflags}_{multiarch}',
      )
  
- 
+ def _print_config_dict(d, stream):
 diff --git a/Makefile.pre.in b/Makefile.pre.in
 index c668017..14f0120 100644
 --- a/Makefile.pre.in
