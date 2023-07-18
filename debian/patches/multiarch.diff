@@ -8,10 +8,10 @@ Subject: multiarch
  2 files changed, 7 insertions(+)
 
 diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py
-index bb6906a..8d0f5fc 100644
+index 655d809..5d108a3 100644
 --- a/Lib/sysconfig.py
 +++ b/Lib/sysconfig.py
-@@ -713,6 +713,12 @@ def _init_config_vars():
+@@ -717,6 +717,12 @@ def _init_config_vars():
          # the init-function.
          _CONFIG_VARS['userbase'] = _getuserbase()
  
