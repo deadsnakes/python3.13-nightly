@@ -28,7 +28,6 @@ import shlex
 import string
 import sys
 import textwrap
-import traceback
 
 from collections.abc import (
     Callable,
@@ -137,6 +136,28 @@ def text_accumulator() -> TextAccumulator:
     text, append, output = _text_accumulator()
     return TextAccumulator(append, output)
 
+
+@dc.dataclass
+class ClinicError(Exception):
+    message: str
+    _: dc.KW_ONLY
+    lineno: int | None = None
+    filename: str | None = None
+
+    def __post_init__(self) -> None:
+        super().__init__(self.message)
+
+    def report(self, *, warn_only: bool = False) -> str:
+        msg = "Warning" if warn_only else "Error"
+        if self.filename is not None:
+            msg += f" in file {self.filename!r}"
+        if self.lineno is not None:
+            msg += f" on line {self.lineno}"
+        msg += ":\n"
+        msg += f"{self.message}\n"
+        return msg
+
+
 @overload
 def warn_or_fail(
     *args: object,
@@ -160,25 +181,16 @@ def warn_or_fail(
     line_number: int | None = None,
 ) -> None:
     joined = " ".join([str(a) for a in args])
-    add, output = text_accumulator()
-    if fail:
-        add("Error")
-    else:
-        add("Warning")
     if clinic:
         if filename is None:
             filename = clinic.filename
         if getattr(clinic, 'block_parser', None) and (line_number is None):
             line_number = clinic.block_parser.line_number
-    if filename is not None:
-        add(' in file "' + filename + '"')
-    if line_number is not None:
-        add(" on line " + str(line_number))
-    add(':\n')
-    add(joined)
-    print(output())
+    error = ClinicError(joined, filename=filename, lineno=line_number)
     if fail:
-        sys.exit(-1)
+        raise error
+    else:
+        print(error.report(warn_only=True))
 
 
 def warn(
@@ -347,7 +359,7 @@ def version_splitter(s: str) -> tuple[int, ...]:
     accumulator: list[str] = []
     def flush() -> None:
         if not accumulator:
-            raise ValueError('Unsupported version string: ' + repr(s))
+            fail(f'Unsupported version string: {s!r}')
         version.append(int(''.join(accumulator)))
         accumulator.clear()
 
@@ -360,7 +372,7 @@ def version_splitter(s: str) -> tuple[int, ...]:
             flush()
             version.append('abc'.index(c) - 3)
         else:
-            raise ValueError('Illegal character ' + repr(c) + ' in version string ' + repr(s))
+            fail(f'Illegal character {c!r} in version string {s!r}')
     flush()
     return tuple(version)
 
@@ -760,6 +772,59 @@ class CLanguage(Language):
     stop_line     = "[{dsl_name} start generated code]*/"
     checksum_line = "/*[{dsl_name} end generated code: {arguments}]*/"
 
+    PARSER_PROTOTYPE_KEYWORD: Final[str] = normalize_snippet("""
+        static PyObject *
+        {c_basename}({self_type}{self_name}, PyObject *args, PyObject *kwargs)
+    """)
+    PARSER_PROTOTYPE_KEYWORD___INIT__: Final[str] = normalize_snippet("""
+        static int
+        {c_basename}({self_type}{self_name}, PyObject *args, PyObject *kwargs)
+    """)
+    PARSER_PROTOTYPE_VARARGS: Final[str] = normalize_snippet("""
+        static PyObject *
+        {c_basename}({self_type}{self_name}, PyObject *args)
+    """)
+    PARSER_PROTOTYPE_FASTCALL: Final[str] = normalize_snippet("""
+        static PyObject *
+        {c_basename}({self_type}{self_name}, PyObject *const *args, Py_ssize_t nargs)
+    """)
+    PARSER_PROTOTYPE_FASTCALL_KEYWORDS: Final[str] = normalize_snippet("""
+        static PyObject *
+        {c_basename}({self_type}{self_name}, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
+    """)
+    PARSER_PROTOTYPE_DEF_CLASS: Final[str] = normalize_snippet("""
+        static PyObject *
+        {c_basename}({self_type}{self_name}, PyTypeObject *{defining_class_name}, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
+    """)
+    PARSER_PROTOTYPE_NOARGS: Final[str] = normalize_snippet("""
+        static PyObject *
+        {c_basename}({self_type}{self_name}, PyObject *Py_UNUSED(ignored))
+    """)
+    METH_O_PROTOTYPE: Final[str] = normalize_snippet("""
+        static PyObject *
+        {c_basename}({impl_parameters})
+    """)
+    DOCSTRING_PROTOTYPE_VAR: Final[str] = normalize_snippet("""
+        PyDoc_VAR({c_basename}__doc__);
+    """)
+    DOCSTRING_PROTOTYPE_STRVAR: Final[str] = normalize_snippet("""
+        PyDoc_STRVAR({c_basename}__doc__,
+        {docstring});
+    """)
+    IMPL_DEFINITION_PROTOTYPE: Final[str] = normalize_snippet("""
+        static {impl_return_type}
+        {c_basename}_impl({impl_parameters})
+    """)
+    METHODDEF_PROTOTYPE_DEFINE: Final[str] = normalize_snippet(r"""
+        #define {methoddef_name}    \
+            {{"{name}", {methoddef_cast}{c_basename}{methoddef_cast_end}, {methoddef_flags}, {c_basename}__doc__}},
+    """)
+    METHODDEF_PROTOTYPE_IFNDEF: Final[str] = normalize_snippet("""
+        #ifndef {methoddef_name}
+            #define {methoddef_name}
+        #endif /* !defined({methoddef_name}) */
+    """)
+
     def __init__(self, filename: str) -> None:
         super().__init__(filename)
         self.cpp = cpp.Monitor(filename)
@@ -785,9 +850,6 @@ class CLanguage(Language):
             self,
             f: Function
     ) -> str:
-        if re.search(r'[^\x00-\x7F]', f.docstring):
-            warn("Non-ascii character appear in docstring.")
-
         text, add, output = _text_accumulator()
         # turn docstring into a properly quoted C string
         for line in f.docstring.split('\n'):
@@ -865,51 +927,14 @@ class CLanguage(Language):
         # methoddef_ifndef
 
         return_value_declaration = "PyObject *return_value = NULL;"
-
-        methoddef_define = normalize_snippet("""
-            #define {methoddef_name}    \\
-                {{"{name}", {methoddef_cast}{c_basename}{methoddef_cast_end}, {methoddef_flags}, {c_basename}__doc__}},
-            """)
+        methoddef_define = self.METHODDEF_PROTOTYPE_DEFINE
         if new_or_init and not f.docstring:
             docstring_prototype = docstring_definition = ''
         else:
-            docstring_prototype = normalize_snippet("""
-                PyDoc_VAR({c_basename}__doc__);
-                """)
-            docstring_definition = normalize_snippet("""
-                PyDoc_STRVAR({c_basename}__doc__,
-                {docstring});
-                """)
-        impl_definition = normalize_snippet("""
-            static {impl_return_type}
-            {c_basename}_impl({impl_parameters})
-            """)
+            docstring_prototype = self.DOCSTRING_PROTOTYPE_VAR
+            docstring_definition = self.DOCSTRING_PROTOTYPE_STRVAR
+        impl_definition = self.IMPL_DEFINITION_PROTOTYPE
         impl_prototype = parser_prototype = parser_definition = None
-
-        parser_prototype_keyword = normalize_snippet("""
-            static PyObject *
-            {c_basename}({self_type}{self_name}, PyObject *args, PyObject *kwargs)
-            """)
-
-        parser_prototype_varargs = normalize_snippet("""
-            static PyObject *
-            {c_basename}({self_type}{self_name}, PyObject *args)
-            """)
-
-        parser_prototype_fastcall = normalize_snippet("""
-            static PyObject *
-            {c_basename}({self_type}{self_name}, PyObject *const *args, Py_ssize_t nargs)
-            """)
-
-        parser_prototype_fastcall_keywords = normalize_snippet("""
-            static PyObject *
-            {c_basename}({self_type}{self_name}, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
-            """)
-
-        parser_prototype_def_class = normalize_snippet("""
-            static PyObject *
-            {c_basename}({self_type}{self_name}, PyTypeObject *{defining_class_name}, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
-        """)
 
         # parser_body_fields remembers the fields passed in to the
         # previous call to parser_body. this is used for an awful hack.
@@ -953,19 +978,13 @@ class CLanguage(Language):
             if not requires_defining_class:
                 # no parameters, METH_NOARGS
                 flags = "METH_NOARGS"
-
-                parser_prototype = normalize_snippet("""
-                    static PyObject *
-                    {c_basename}({self_type}{self_name}, PyObject *Py_UNUSED(ignored))
-                    """)
+                parser_prototype = self.PARSER_PROTOTYPE_NOARGS
                 parser_code = []
-
             else:
                 assert not new_or_init
 
                 flags = "METH_METHOD|METH_FASTCALL|METH_KEYWORDS"
-
-                parser_prototype = parser_prototype_def_class
+                parser_prototype = self.PARSER_PROTOTYPE_DEF_CLASS
                 return_error = ('return NULL;' if default_return_converter
                                 else 'goto exit;')
                 parser_code = [normalize_snippet("""
@@ -990,10 +1009,7 @@ class CLanguage(Language):
 
             if (isinstance(converters[0], object_converter) and
                 converters[0].format_unit == 'O'):
-                meth_o_prototype = normalize_snippet("""
-                    static PyObject *
-                    {c_basename}({impl_parameters})
-                    """)
+                meth_o_prototype = self.METH_O_PROTOTYPE
 
                 if default_return_converter:
                     # maps perfectly to METH_O, doesn't need a return converter.
@@ -1033,8 +1049,7 @@ class CLanguage(Language):
             #  in a big switch statement)
 
             flags = "METH_VARARGS"
-            parser_prototype = parser_prototype_varargs
-
+            parser_prototype = self.PARSER_PROTOTYPE_VARARGS
             parser_definition = parser_body(parser_prototype, '    {option_group_parsing}')
 
         elif not requires_defining_class and pos_only == len(parameters) - pseudo_args:
@@ -1043,7 +1058,7 @@ class CLanguage(Language):
                 # we only need one call to _PyArg_ParseStack
 
                 flags = "METH_FASTCALL"
-                parser_prototype = parser_prototype_fastcall
+                parser_prototype = self.PARSER_PROTOTYPE_FASTCALL
                 nargs = 'nargs'
                 argname_fmt = 'args[%d]'
             else:
@@ -1051,7 +1066,7 @@ class CLanguage(Language):
                 # we only need one call to PyArg_ParseTuple
 
                 flags = "METH_VARARGS"
-                parser_prototype = parser_prototype_varargs
+                parser_prototype = self.PARSER_PROTOTYPE_VARARGS
                 nargs = 'PyTuple_GET_SIZE(args)'
                 argname_fmt = 'PyTuple_GET_ITEM(args, %d)'
 
@@ -1098,7 +1113,6 @@ class CLanguage(Language):
 
                 parsearg = p.converter.parse_arg(argname, displayname)
                 if parsearg is None:
-                    #print('Cannot convert %s %r for %s' % (p.converter.__class__.__name__, p.converter.format_unit, p.converter.name), file=sys.stderr)
                     parser_code = None
                     break
                 if has_optional or p.is_optional():
@@ -1149,7 +1163,7 @@ class CLanguage(Language):
                 nargs = f"Py_MIN(nargs, {max_pos})" if max_pos else "0"
             if not new_or_init:
                 flags = "METH_FASTCALL|METH_KEYWORDS"
-                parser_prototype = parser_prototype_fastcall_keywords
+                parser_prototype = self.PARSER_PROTOTYPE_FASTCALL_KEYWORDS
                 argname_fmt = 'args[%d]'
                 declarations = declare_parser(f)
                 declarations += "\nPyObject *argsbuf[%s];" % len(converters)
@@ -1164,7 +1178,7 @@ class CLanguage(Language):
             else:
                 # positional-or-keyword arguments
                 flags = "METH_VARARGS|METH_KEYWORDS"
-                parser_prototype = parser_prototype_keyword
+                parser_prototype = self.PARSER_PROTOTYPE_KEYWORD
                 argname_fmt = 'fastargs[%d]'
                 declarations = declare_parser(f)
                 declarations += "\nPyObject *argsbuf[%s];" % len(converters)
@@ -1181,7 +1195,7 @@ class CLanguage(Language):
 
             if requires_defining_class:
                 flags = 'METH_METHOD|' + flags
-                parser_prototype = parser_prototype_def_class
+                parser_prototype = self.PARSER_PROTOTYPE_DEF_CLASS
 
             add_label: str | None = None
             for i, p in enumerate(parameters):
@@ -1191,7 +1205,6 @@ class CLanguage(Language):
                 displayname = p.get_displayname(i+1)
                 parsearg = p.converter.parse_arg(argname_fmt % i, displayname)
                 if parsearg is None:
-                    #print('Cannot convert %s %r for %s' % (p.converter.__class__.__name__, p.converter.format_unit, p.converter.name), file=sys.stderr)
                     parser_code = None
                     break
                 if add_label and (i == pos_only or i == max_pos):
@@ -1269,13 +1282,10 @@ class CLanguage(Language):
             methoddef_define = ''
 
             if f.kind is METHOD_NEW:
-                parser_prototype = parser_prototype_keyword
+                parser_prototype = self.PARSER_PROTOTYPE_KEYWORD
             else:
                 return_value_declaration = "int return_value = -1;"
-                parser_prototype = normalize_snippet("""
-                    static int
-                    {c_basename}({self_type}{self_name}, PyObject *args, PyObject *kwargs)
-                    """)
+                parser_prototype = self.PARSER_PROTOTYPE_KEYWORD___INIT__
 
             fields = list(parser_body_fields)
             parses_positional = 'METH_NOARGS' not in flags
@@ -1328,12 +1338,7 @@ class CLanguage(Language):
 
             if methoddef_define and f.full_name not in clinic.ifndef_symbols:
                 clinic.ifndef_symbols.add(f.full_name)
-                methoddef_ifndef = normalize_snippet("""
-                    #ifndef {methoddef_name}
-                        #define {methoddef_name}
-                    #endif /* !defined({methoddef_name}) */
-                    """)
-
+                methoddef_ifndef = self.METHODDEF_PROTOTYPE_IFNDEF
 
         # add ';' to the end of parser_prototype and impl_prototype
         # (they mustn't be None, but they could be an empty string.)
@@ -2240,11 +2245,7 @@ impl_definition block
                     assert dsl_name in parsers, f"No parser to handle {dsl_name!r} block."
                     self.parsers[dsl_name] = parsers[dsl_name](self)
                 parser = self.parsers[dsl_name]
-                try:
-                    parser.parse(block)
-                except Exception:
-                    fail('Exception raised during parsing:\n' +
-                         traceback.format_exc().rstrip())
+                parser.parse(block)
             printer.print_block(block)
 
         # these are destinations not buffers
@@ -4607,7 +4608,11 @@ class DSLParser:
         for line_number, line in enumerate(lines, self.clinic.block_parser.block_start_line_number):
             if '\t' in line:
                 fail('Tab characters are illegal in the Clinic DSL.\n\t' + repr(line), line_number=block_start)
-            self.state(line)
+            try:
+                self.state(line)
+            except ClinicError as exc:
+                exc.lineno = line_number
+                raise
 
         self.do_post_block_processing_cleanup()
         block.output.extend(self.clinic.language.render(self.clinic, block.signatures))
@@ -4645,13 +4650,11 @@ class DSLParser:
             state: StateKeeper,
             line: str | None = None
     ) -> None:
-        # real_print(self.state.__name__, "->", state.__name__, ", line=", line)
         self.state = state
         if line is not None:
             self.state(line)
 
     def state_dsl_start(self, line: str) -> None:
-        # self.block = self.ClinicOutputBlock(self)
         if not self.valid_line(line):
             return
 
@@ -4710,8 +4713,8 @@ class DSLParser:
                     if existing_function.name == function_name:
                         break
                 else:
-                    print(f"{cls=}, {module=}, {existing=}")
-                    print(f"{(cls or module).functions=}")
+                    print(f"{cls=}, {module=}, {existing=}", file=sys.stderr)
+                    print(f"{(cls or module).functions=}", file=sys.stderr)
                     fail(f"Couldn't find existing function {existing!r}!")
 
                 fields = [x.strip() for x in full_name.split('.')]
@@ -5270,6 +5273,11 @@ class DSLParser:
 
     def docstring_append(self, obj: Function | Parameter, line: str) -> None:
         """Add a rstripped line to the current docstring."""
+        matches = re.finditer(r'[^\x00-\x7F]', line)
+        if offending := ", ".join([repr(m[0]) for m in matches]):
+            warn("Non-ascii characters are not allowed in docstrings:",
+                 offending)
+
         docstring = obj.docstring
         if docstring:
             docstring += "\n"
@@ -5723,8 +5731,13 @@ def run_clinic(parser: argparse.ArgumentParser, ns: argparse.Namespace) -> None:
 def main(argv: list[str] | None = None) -> NoReturn:
     parser = create_cli()
     args = parser.parse_args(argv)
-    run_clinic(parser, args)
-    sys.exit(0)
+    try:
+        run_clinic(parser, args)
+    except ClinicError as exc:
+        sys.stderr.write(exc.report())
+        sys.exit(1)
+    else:
+        sys.exit(0)
 
 
 if __name__ == "__main__":
