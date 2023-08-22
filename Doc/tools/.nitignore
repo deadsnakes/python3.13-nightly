@@ -2,7 +2,6 @@
 # as tested on the CI via check-warnings.py in reusable-docs.yml.
 # Keep lines sorted lexicographically to help avoid merge conflicts.
 
-Doc/c-api/datetime.rst
 Doc/c-api/descriptor.rst
 Doc/c-api/exceptions.rst
 Doc/c-api/file.rst
@@ -164,9 +163,7 @@ Doc/tutorial/appendix.rst
 Doc/tutorial/classes.rst
 Doc/tutorial/controlflow.rst
 Doc/tutorial/datastructures.rst
-Doc/tutorial/inputoutput.rst
 Doc/tutorial/introduction.rst
-Doc/tutorial/modules.rst
 Doc/using/cmdline.rst
 Doc/using/configure.rst
 Doc/using/windows.rst
