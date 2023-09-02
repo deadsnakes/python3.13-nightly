@@ -7,7 +7,7 @@
 #include "pycore_runtime.h"       // _Py_ID()
 
 #include <ctype.h>
-
+#include <time.h>                 // clock()
 #ifdef HAVE_SYS_TIMES_H
 #  include <sys/times.h>
 #endif
@@ -414,6 +414,8 @@ Return the clk_id of a thread's CPU time clock.");
 static PyObject *
 time_sleep(PyObject *self, PyObject *timeout_obj)
 {
+    PySys_Audit("time.sleep", "O", timeout_obj);
+
     _PyTime_t timeout;
     if (_PyTime_FromSecondsObject(&timeout, timeout_obj, _PyTime_ROUND_TIMEOUT))
         return NULL;
