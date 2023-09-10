@@ -18,14 +18,14 @@ from test.libregrtest.utils import (setup_unraisable_hook,
 UNICODE_GUARD_ENV = "PYTHONREGRTEST_UNICODE_GUARD"
 
 
-def setup_test_dir(testdir):
+def setup_test_dir(testdir: str | None) -> None:
     if testdir:
         # Prepend test directory to sys.path, so runtest() will be able
         # to locate tests
         sys.path.insert(0, os.path.abspath(testdir))
 
 
-def setup_tests(runtests, ns):
+def setup_tests(runtests):
     try:
         stderr_fd = sys.__stderr__.fileno()
     except (ValueError, AttributeError):
@@ -68,18 +68,18 @@ def setup_tests(runtests, ns):
         if getattr(module, '__file__', None):
             module.__file__ = os.path.abspath(module.__file__)
 
-    if ns.huntrleaks:
+    if runtests.hunt_refleak:
         unittest.BaseTestSuite._cleanup = False
 
-    if ns.memlimit is not None:
-        support.set_memlimit(ns.memlimit)
+    if runtests.memory_limit is not None:
+        support.set_memlimit(runtests.memory_limit)
 
-    if ns.threshold is not None:
-        gc.set_threshold(ns.threshold)
+    if runtests.gc_threshold is not None:
+        gc.set_threshold(runtests.gc_threshold)
 
-    support.suppress_msvcrt_asserts(ns.verbose and ns.verbose >= 2)
+    support.suppress_msvcrt_asserts(runtests.verbose and runtests.verbose >= 2)
 
-    support.use_resources = ns.use_resources
+    support.use_resources = runtests.use_resources
 
     if hasattr(sys, 'addaudithook'):
         # Add an auditing hook for all tests to ensure PySys_Audit is tested
@@ -102,7 +102,7 @@ def setup_tests(runtests, ns):
         support.SHORT_TIMEOUT = min(support.SHORT_TIMEOUT, timeout)
         support.LONG_TIMEOUT = min(support.LONG_TIMEOUT, timeout)
 
-    if ns.xmlpath:
+    if runtests.junit_filename:
         from test.support.testresult import RegressionTestResult
         RegressionTestResult.USE_XML = True
 
