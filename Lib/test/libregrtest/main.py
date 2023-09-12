@@ -1,17 +1,14 @@
-import locale
 import os
-import platform
 import random
 import re
 import sys
 import time
-import unittest
 
 from test import support
 from test.support import os_helper
 
 from .cmdline import _parse_args, Namespace
-from .findtests import findtests, split_test_packages
+from .findtests import findtests, split_test_packages, list_cases
 from .logger import Logger
 from .result import State
 from .runtests import RunTests, HuntRefleak
@@ -22,8 +19,8 @@ from .results import TestResults
 from .utils import (
     StrPath, StrJSON, TestName, TestList, TestTuple, FilterTuple,
     strip_py_suffix, count, format_duration,
-    printlist, get_build_info, get_temp_dir, get_work_dir, exit_timeout,
-     abs_module_name)
+    printlist, get_temp_dir, get_work_dir, exit_timeout,
+    display_header, cleanup_temp_dir)
 
 
 class Regrtest:
@@ -115,8 +112,11 @@ class Regrtest:
         self.junit_filename: StrPath | None = ns.xmlpath
         self.memory_limit: str | None = ns.memlimit
         self.gc_threshold: int | None = ns.threshold
-        self.use_resources: list[str] = ns.use_resources
-        self.python_cmd: list[str] | None = ns.python
+        self.use_resources: tuple[str] = tuple(ns.use_resources)
+        if ns.python:
+            self.python_cmd: tuple[str] = tuple(ns.python)
+        else:
+            self.python_cmd = None
         self.coverage: bool = ns.trace
         self.coverage_dir: StrPath | None = ns.coverdir
         self.tmp_dir: StrPath | None = ns.tempdir
@@ -214,36 +214,6 @@ class Regrtest:
         for name in tests:
             print(name)
 
-    def _list_cases(self, suite):
-        for test in suite:
-            if isinstance(test, unittest.loader._FailedTest):
-                continue
-            if isinstance(test, unittest.TestSuite):
-                self._list_cases(test)
-            elif isinstance(test, unittest.TestCase):
-                if support.match_test(test):
-                    print(test.id())
-
-    def list_cases(self, tests: TestTuple):
-        support.verbose = False
-        support.set_match_tests(self.match_tests, self.ignore_tests)
-
-        skipped = []
-        for test_name in tests:
-            module_name = abs_module_name(test_name, self.test_dir)
-            try:
-                suite = unittest.defaultTestLoader.loadTestsFromName(module_name)
-                self._list_cases(suite)
-            except unittest.SkipTest:
-                skipped.append(test_name)
-
-        if skipped:
-            sys.stdout.flush()
-            stderr = sys.stderr
-            print(file=stderr)
-            print(count(len(skipped), "test"), "skipped:", file=stderr)
-            printlist(skipped, file=stderr)
-
     def _rerun_failed_tests(self, runtests: RunTests):
         # Configure the runner to re-run tests
         if self.num_workers == 0:
@@ -325,7 +295,12 @@ class Regrtest:
 
         save_modules = sys.modules.keys()
 
-        msg = "Run tests sequentially"
+        jobs = runtests.get_jobs()
+        if jobs is not None:
+            tests = f'{jobs} tests'
+        else:
+            tests = 'tests'
+        msg = f"Run {tests} sequentially"
         if runtests.timeout:
             msg += " (timeout: %s)" % format_duration(runtests.timeout)
         self.log(msg)
@@ -362,45 +337,6 @@ class Regrtest:
             print(previous_test)
 
         return tracer
-
-    @staticmethod
-    def display_header():
-        # Print basic platform information
-        print("==", platform.python_implementation(), *sys.version.split())
-        print("==", platform.platform(aliased=True),
-                      "%s-endian" % sys.byteorder)
-        print("== Python build:", ' '.join(get_build_info()))
-        print("== cwd:", os.getcwd())
-        cpu_count = os.cpu_count()
-        if cpu_count:
-            print("== CPU count:", cpu_count)
-        print("== encodings: locale=%s, FS=%s"
-              % (locale.getencoding(), sys.getfilesystemencoding()))
-
-        # This makes it easier to remember what to set in your local
-        # environment when trying to reproduce a sanitizer failure.
-        asan = support.check_sanitizer(address=True)
-        msan = support.check_sanitizer(memory=True)
-        ubsan = support.check_sanitizer(ub=True)
-        sanitizers = []
-        if asan:
-            sanitizers.append("address")
-        if msan:
-            sanitizers.append("memory")
-        if ubsan:
-            sanitizers.append("undefined behavior")
-        if not sanitizers:
-            return
-
-        print(f"== sanitizers: {', '.join(sanitizers)}")
-        for sanitizer, env_var in (
-            (asan, "ASAN_OPTIONS"),
-            (msan, "MSAN_OPTIONS"),
-            (ubsan, "UBSAN_OPTIONS"),
-        ):
-            options= os.environ.get(env_var)
-            if sanitizer and options is not None:
-                print(f"== {env_var}={options!r}")
 
     def get_state(self):
         state = self.results.get_state(self.fail_env_changed)
@@ -445,26 +381,15 @@ class Regrtest:
         state = self.get_state()
         print(f"Result: {state}")
 
-    @staticmethod
-    def cleanup_temp_dir(tmp_dir: StrPath):
-        import glob
-
-        path = os.path.join(glob.escape(tmp_dir), 'test_python_*')
-        print("Cleanup %s directory" % tmp_dir)
-        for name in glob.glob(path):
-            if os.path.isdir(name):
-                print("Remove directory: %s" % name)
-                os_helper.rmtree(name)
-            else:
-                print("Remove file: %s" % name)
-                os_helper.unlink(name)
-
     def create_run_tests(self, tests: TestTuple):
         return RunTests(
             tests,
             fail_fast=self.fail_fast,
+            fail_env_changed=self.fail_env_changed,
             match_tests=self.match_tests,
             ignore_tests=self.ignore_tests,
+            match_tests_dict=None,
+            rerun=None,
             forever=self.forever,
             pgo=self.pgo,
             pgo_extended=self.pgo_extended,
@@ -479,6 +404,9 @@ class Regrtest:
             gc_threshold=self.gc_threshold,
             use_resources=self.use_resources,
             python_cmd=self.python_cmd,
+            randomize=self.randomize,
+            random_seed=self.random_seed,
+            json_fd=None,
         )
 
     def _run_tests(self, selected: TestTuple, tests: TestList | None) -> int:
@@ -496,7 +424,7 @@ class Regrtest:
         if (self.want_header
             or not(self.pgo or self.quiet or self.single_test_run
                    or tests or self.cmdline_args)):
-            self.display_header()
+            display_header()
 
         if self.randomize:
             print("Using random seed", self.random_seed)
@@ -554,7 +482,7 @@ class Regrtest:
         self.tmp_dir = get_temp_dir(self.tmp_dir)
 
         if self.want_cleanup:
-            self.cleanup_temp_dir(self.tmp_dir)
+            cleanup_temp_dir(self.tmp_dir)
             sys.exit(0)
 
         if self.want_wait:
@@ -567,7 +495,10 @@ class Regrtest:
         if self.want_list_tests:
             self.list_tests(selected)
         elif self.want_list_cases:
-            self.list_cases(selected)
+            list_cases(selected,
+                       match_tests=self.match_tests,
+                       ignore_tests=self.ignore_tests,
+                       test_dir=self.test_dir)
         else:
             exitcode = self.run_tests(selected, tests)
 
