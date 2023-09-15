@@ -28,10 +28,10 @@ index 5d108a3..05b4ad7 100644
  
  def _print_config_dict(d, stream):
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index 2e6eac1..5eb73d2 100644
+index 435a42e..abf7daf 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2326,8 +2326,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
+@@ -2327,8 +2327,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
  			esac; \
  		done; \
  	done
