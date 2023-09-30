@@ -10,7 +10,6 @@ disable-sem-check.diff
 lib-argparse.diff
 ctypes-arm.diff
 multiarch.diff
-test-no-random-order.diff
 tempfile-minimal.diff
 reproducible-buildinfo.diff
 pydoc-use-pager.diff
