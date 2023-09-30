@@ -17,3 +17,4 @@ argparse-no-shutil.diff
 0028-sysconfigdata-name.patch
 0029-destshared-location.patch
 0020-actually-don-t-require-autoconf-2.71.patch
+0020-test-no-random-order.patch
