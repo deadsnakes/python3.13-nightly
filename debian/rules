@@ -242,6 +242,8 @@ buildd_static	:= $(CURDIR)/build-static
 buildd_shared	:= $(CURDIR)/build-shared
 buildd_debug	:= $(CURDIR)/build-debug
 buildd_shdebug	:= $(CURDIR)/build-shdebug
+buildd_nogil	:= $(CURDIR)/build-nogil
+buildd_shnogil	:= $(CURDIR)/build-shnogil
 
 d		:= debian/tmp
 scriptdir	=  usr/share/lib/python$(VER)
@@ -256,18 +258,22 @@ p_dev	:= $(PVER)-dev
 p_exam	:= $(PVER)-examples
 p_idle	:= idle-$(PVER)
 p_dbg	:= $(PVER)-dbg
+p_nogil	:= $(PVER)-nogil
 p_udeb	:= $(PVER)-udeb
 p_venv	:= $(PVER)-venv
 p_tk	:= $(PVER)-tk
 p_tk_dbg	:= $(PVER)-tk-dbg
+p_tk_nogil	:= $(PVER)-tk-nogil
 p_gdbm	:= $(PVER)-gdbm
 p_gdbm_dbg	:= $(PVER)-gdbm-dbg
+p_gdbm_nogil	:= $(PVER)-gdbm-nogil
 p_full	:= $(PVER)-full
 
 p_lbase	:= lib$(PVER)-stdlib
 p_lmin	:= lib$(PVER)-minimal
 p_ldev	:= lib$(PVER)-dev
 p_ldbg	:= lib$(PVER)-dbg
+p_lnogil	:= lib$(PVER)-nogil
 p_ltst	:= lib$(PVER)-testsuite
 
 d_base	:= debian/$(p_base)
@@ -277,17 +283,21 @@ d_dev	:= debian/$(p_dev)
 d_exam	:= debian/$(p_exam)
 d_idle	:= debian/$(p_idle)
 d_dbg	:= debian/$(p_dbg)
+d_nogil	:= debian/$(p_nogil)
 d_udeb	:= debian/$(p_udeb)
 d_venv	:= debian/$(p_venv)
 d_tk	:= debian/$(p_tk)
 d_tk_dbg	:= debian/$(p_tk_dbg)
+d_tk_nogil	:= debian/$(p_tk_nogil)
 d_gdbm	:= debian/$(p_gdbm)
 d_gdbm_dbg	:= debian/$(p_gdbm_dbg)
+d_gdbm_nogil	:= debian/$(p_gdbm_nogil)
 
 d_lbase	:= debian/$(p_lbase)
 d_lmin	:= debian/$(p_lmin)
 d_ldev	:= debian/$(p_ldev)
 d_ldbg	:= debian/$(p_ldbg)
+d_lnogil	:= debian/$(p_lnogil)
 d_ltst	:= debian/$(p_ltst)
 
 build-arch: stamps/stamp-build
@@ -295,8 +305,11 @@ build-indep:
 build: build-arch
 stamps/stamp-build: stamps/stamp-build-static \
     stamps/stamp-mincheck \
-    stamps/stamp-build-shared stamps/stamp-build-debug \
+    stamps/stamp-build-shared \
+    stamps/stamp-build-debug \
     stamps/stamp-build-shared-debug \
+    stamps/stamp-build-nogil \
+    stamps/stamp-build-shared-nogil \
     stamps/stamp-check stamps/stamp-pybench
 	touch $@
 
@@ -339,7 +352,7 @@ stamps/stamp-build-debug: stamps/stamp-configure-debug
 	$(MAKE) $(NJOBS) -C $(buildd_debug) \
 		EXTRA_CFLAGS="$(DEBUG_CFLAGS)"
 
-	cd $(buildd_static) && ./python -c 'import _decimal'
+	cd $(buildd_debug) && ./python -c 'import _decimal'
 	cd $(buildd_debug) && ./python -c 'import math, cmath'
 
 	touch stamps/stamp-build-debug
@@ -350,6 +363,21 @@ stamps/stamp-build-shared-debug: stamps/stamp-configure-shared-debug
 	$(MAKE) $(NJOBS) -C $(buildd_shdebug) \
 		EXTRA_CFLAGS="$(DEBUG_CFLAGS)"
 	touch stamps/stamp-build-shared-debug
+
+stamps/stamp-build-nogil: stamps/stamp-configure-nogil
+	dh_testdir
+	$(MAKE) $(NJOBS) -C $(buildd_nogil)
+
+	cd $(buildd_nogil) && ./python -c 'import _decimal'
+	cd $(buildd_nogil) && ./python -c 'import math, cmath'
+
+	touch stamps/stamp-build-nogil
+
+stamps/stamp-build-shared-nogil: stamps/stamp-configure-shared-nogil
+	dh_testdir
+	: # build the shared nogil library
+	$(MAKE) $(NJOBS) -C $(buildd_shnogil)
+	touch stamps/stamp-build-shared-nogil
 
 common_configure_args = \
 		--prefix=/usr \
@@ -436,6 +464,35 @@ stamps/stamp-configure-shared-debug: stamps/stamp-patch
 		--with-pydebug
 
 	$(call __post_configure,$(buildd_shdebug))
+	touch $@
+
+stamps/stamp-configure-nogil: stamps/stamp-patch
+	rm -rf $(buildd_nogil)
+	mkdir -p $(buildd_nogil)
+	cd $(buildd_nogil) && \
+	  AR="$(AR)" RANLIB="$(RANLIB)" CFLAGS="$(OPT_CFLAGS)" \
+	  CPPFLAGS="$(DPKG_CPPFLAGS)" LDFLAGS="$(DPKG_LDFLAGS) $(LTO_CFLAGS)" \
+	    $(config_site) \
+	    ../configure \
+		$(common_configure_args) \
+		--disable-gil
+
+	$(call __post_configure,$(buildd_nogil))
+	touch $@
+
+stamps/stamp-configure-shared-nogil: stamps/stamp-patch
+	rm -rf $(buildd_shnogil)
+	mkdir -p $(buildd_shnogil)
+	cd $(buildd_shnogil) && \
+	  AR="$(AR)" RANLIB="$(RANLIB)" CFLAGS="$(OPT_CFLAGS)" \
+	  CPPFLAGS="$(DPKG_CPPFLAGS)" LDFLAGS="$(DPKG_LDFLAGS) $(LTO_CFLAGS)" \
+	    $(config_site) \
+	    ../configure \
+		$(common_configure_args) \
+		--enable-shared \
+		--disable-gil
+
+	$(call __post_configure,$(buildd_shnogil))
 	touch $@
 
 define __post_configure
@@ -711,6 +768,7 @@ clean: control-file
 	rm -f Lib/dist-packages
 	rm -rf locales
 	rm -rf $(d)-dbg
+	rm -rf $(d)-nogil
 	rm -f configure
 	rm -f netlify.toml
 	rm -rf $(TEST_DIR) debian/testdir
@@ -1038,7 +1096,7 @@ endif
 		README.rst Misc/ACKS
 	ln -sf NEWS.gz $(d_base)/usr/share/doc/$(p_base)/changelog.gz
 	dh_installdocs --all \
-		-N$(p_base) -N$(p_dev) -N$(p_dbg) -N$(p_lib) \
+		-N$(p_base) -N$(p_dev) -N$(p_dbg) -N$(p_nogil) -N$(p_lib) \
 		debian/README.Debian
 
 	: # IDLE has its own changelogs, docs...
@@ -1242,6 +1300,132 @@ endif
 	ln -sf $(PVER).1.gz $(d_dbg)/usr/share/man/man1/$(PVER)d.1.gz
 	ln -sf $(PVER)-config.1.gz $(d_dbg)/usr/share/man/man1/$(PVER)d-config.1.gz
 
+	: # install nogil package
+	rm -rf $(d)-nogil
+	$(MAKE) -C $(buildd_nogil) install DESTDIR=$(CURDIR)/$(d)-nogil
+	: # install the Makefile of the shared python nogil build
+	sed $(sysconfig_substflags) \
+		$(buildd_shnogil)/Makefile \
+		> $(d)-nogil/$(scriptdir)/config-$(VER)t-$(DEB_HOST_MULTIARCH)/Makefile
+	sed $(sysconfig_substflags) \
+		$(buildd_shnogil)/$(shell cat $(buildd_shnogil)/pybuilddir.txt)/_sysconfigdata_t_$(DEB_HOST_MULTIARCH).py \
+		> $(d)-nogil/$(scriptdir)/_sysconfigdata_t_$(DEB_HOST_MULTIARCH).py
+	sed -i $(sysconfig_substflags) \
+		$(d)-nogil/$(scriptdir)/_sysconfigdata_t_$(DEB_HOST_MULTIARCH).py
+
+	for i in $(d)-nogil/$(scriptdir)/lib-dynload/*.so; do \
+	  case "$$i" in *$(DEB_HOST_MULTIARCH)*) continue; esac; \
+	  b=$$(basename $$i .cpython-$(EXT_VER)t.so); \
+	  d=$${b}.cpython-$(EXT_VER)t-$(DEB_HOST_MULTIARCH).so; \
+	  mv $$i $(d)-nogil/$(scriptdir)/lib-dynload/$$d; \
+	done
+
+ifeq ($(with_tk),yes)
+	# move nogil files to corresponding nogil package
+	dh_installdirs -p$(p_tk_nogil) $(scriptdir)/lib-dynload
+	dh_install --autodest -p$(p_tk_nogil) --sourcedir $(d)-nogil \
+		$(scriptdir)/lib-dynload/_tkinter*.so
+endif
+	rm -f $(d)-nogil/$(scriptdir)/lib-dynload/_tkinter*.so
+	rm -f $(d)-nogil/usr/lib/debug/$(scriptdir)/lib-dynload/_tkinter*.so
+
+ifeq ($(with_gdbm),yes)
+	# move nogil files to corresponding nogil package
+	dh_installdirs -p$(p_gdbm_nogil) $(scriptdir)/lib-dynload
+	dh_install --autodest -p$(p_gdbm_nogil) --sourcedir $(d)-nogil \
+		$(scriptdir)/lib-dynload/_gdbm*.so
+endif
+	rm -f $(d)-nogil/$(scriptdir)/lib-dynload/_gdbm*.so
+
+	dh_installdirs -p$(p_lnogil) \
+		usr/bin \
+		usr/share/man/man1 \
+		$(scriptdir)/lib-dynload \
+		usr/include/$(PVER)t \
+		usr/include/$(DEB_HOST_MULTIARCH)/$(PVER)t \
+		usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig
+
+	cp -p $(d)-nogil/$(scriptdir)/lib-dynload/*.so \
+		$(d_lnogil)/$(scriptdir)/lib-dynload/
+	cp -p $(d)-nogil/$(scriptdir)/_sysconfigdata_t_$(DEB_HOST_MULTIARCH).py \
+		$(d_lnogil)/$(scriptdir)/
+	cp -p $(buildd_shnogil)/libpython$(VER)t.so.1.0 \
+		$(d_lnogil)/usr/lib/$(DEB_HOST_MULTIARCH)/
+	dh_link -p$(p_lnogil) \
+	    /usr/lib/$(DEB_HOST_MULTIARCH)/libpython$(VER)t.so.1.0 \
+		/usr/lib/$(DEB_HOST_MULTIARCH)/libpython$(VER)t.so.1 \
+	    /usr/lib/$(DEB_HOST_MULTIARCH)/libpython$(VER)t.so.1 \
+		/usr/lib/$(DEB_HOST_MULTIARCH)/libpython$(VER)t.so
+	cp $(d)-nogil/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/python-$(VER)t.pc \
+	  $(d_lnogil)/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/.
+	ln -s python-$(VER)t.pc \
+	  $(d_lnogil)/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/python-$(VER)-nogil.pc
+	cp $(d)-nogil/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/python-$(VER)t-embed.pc \
+	  $(d_lnogil)/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/.
+	ln -s python-$(VER)t-embed.pc \
+	  $(d_lnogil)/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/python-$(VER)-nogil-embed.pc
+
+	dh_installdirs -p$(p_nogil) \
+		usr/bin \
+		usr/share/man/man1 \
+		usr/share/doc/$(p_base)
+	cp -p Misc/SpecialBuilds.txt $(d_nogil)/usr/share/doc/$(p_base)/
+	cp -p $(buildd_nogil)/python $(d_nogil)/usr/bin/$(PVER)t
+	ln -sf python$(VER)t $(d_nogil)/usr/bin/$(PVER)-nogil
+
+	cp -a $(d)-nogil/$(scriptdir)/config-$(VER)t-$(DEB_HOST_MULTIARCH) \
+		$(d_lnogil)/$(scriptdir)/
+	dh_link -p$(p_lnogil) \
+	    /usr/lib/$(DEB_HOST_MULTIARCH)/libpython$(VER)t.so \
+		/$(scriptdir)/config-$(VER)t-$(DEB_HOST_MULTIARCH)/libpython$(VER)t.so \
+	    /usr/lib/$(DEB_HOST_MULTIARCH)/libpython$(VER)t.so \
+		/$(scriptdir)/config-$(VER)t-$(DEB_HOST_MULTIARCH)/libpython$(VER).so \
+	    /$(scriptdir)/config-$(VER)t-$(DEB_HOST_MULTIARCH)/libpython$(VER)t.a \
+	    	/usr/lib/$(DEB_HOST_MULTIARCH)/libpython$(VER)t.a
+
+	for i in $(d_ldev)/usr/include/$(PVER)/*; do \
+	  i=$$(basename $$i); \
+	  case $$i in pyconfig.h) continue; esac; \
+	  ln -sf ../$(PVER)/$$i $(d_lnogil)/usr/include/$(PVER)t/$$i; \
+	done
+	cp -p $(buildd_nogil)/pyconfig.h $(d_lnogil)/usr/include/$(DEB_HOST_MULTIARCH)/$(PVER)t/
+	sed 's/@subdir@/$(PVER)t/;s/@header@/pyconfig.h/' \
+		debian/multiarch.h.in > $(d_lnogil)/usr/include/$(PVER)t/pyconfig.h
+
+	ln -sf $(PVER).1.gz $(d_nogil)/usr/share/man/man1/$(PVER)-nogil.1.gz
+
+	: # in $(p_lnogil), prefix python-config with triplets
+	sed -i $(sysconfig_substflags) \
+		$(d)-nogil/usr/bin/$(PVER)t-config
+	cp $(d)-nogil/usr/bin/$(PVER)t-config \
+		$(d_lnogil)/usr/bin/$(DEB_HOST_MULTIARCH)-$(PVER)t-config
+	ln -sf $(DEB_HOST_MULTIARCH)-$(PVER)t-config \
+		$(d_lnogil)/usr/bin/$(DEB_HOST_MULTIARCH)-$(PVER)-nogil-config
+	ln -sf $(DEB_HOST_MULTIARCH)-$(PVER)-config.1.gz \
+		$(d_lnogil)/usr/share/man/man1/$(DEB_HOST_MULTIARCH)-$(PVER)t-config.1.gz
+	ln -sf $(DEB_HOST_MULTIARCH)-$(PVER)-config.1.gz \
+		$(d_lnogil)/usr/share/man/man1/$(DEB_HOST_MULTIARCH)-$(PVER)-nogil-config.1.gz
+ifneq ($(DEB_HOST_MULTIARCH),$(DEB_HOST_GNU_TYPE))
+	ln -sf $(DEB_HOST_MULTIARCH)-$(PVER)t-config \
+		$(d_lnogil)/usr/bin/$(DEB_HOST_GNU_TYPE)-$(PVER)t-config
+	ln -sf $(DEB_HOST_MULTIARCH)-$(PVER)-config.1.gz \
+		$(d_lnogil)/usr/share/man/man1/$(DEB_HOST_GNU_TYPE)-$(PVER)t-config.1.gz
+	ln -sf $(DEB_HOST_MULTIARCH)-$(PVER)t-config \
+		$(d_lnogil)/usr/bin/$(DEB_HOST_GNU_TYPE)-$(PVER)-nogil-config
+	ln -sf $(DEB_HOST_MULTIARCH)-$(PVER)t-config.1.gz \
+		$(d_lnogil)/usr/share/man/man1/$(DEB_HOST_GNU_TYPE)-$(PVER)-nogil-config.1.gz
+endif
+	ln -sf $(DEB_HOST_MULTIARCH)-$(PVER)t-config $(d_nogil)/usr/bin/$(PVER)t-config
+	ln -sf $(DEB_HOST_MULTIARCH)-$(PVER)t-config.1.gz $(d_nogil)/usr/share/man/man1/$(PVER)t-config.1.gz
+
+	ln -sf $(DEB_HOST_MULTIARCH)-$(PVER)-nogil-config $(d_nogil)/usr/bin/$(PVER)-nogil-config
+	ln -sf $(DEB_HOST_MULTIARCH)-$(PVER)-nogil-config.1.gz $(d_nogil)/usr/share/man/man1/$(PVER)-nogil-config.1.gz
+
+	: # symlinks for the "old" include / config directory names
+	ln -sf $(PVER)-config.1.gz $(d_nogil)/usr/share/man/man1/$(PVER)-nogil-config.1.gz
+	ln -sf $(PVER).1.gz $(d_nogil)/usr/share/man/man1/$(PVER)t.1.gz
+	ln -sf $(PVER)-config.1.gz $(d_nogil)/usr/share/man/man1/$(PVER)t-config.1.gz
+
 ifeq ($(with_udeb),yes)
 	: # Copy the most important files from $(p_min) into $(p_udeb).
 	dh_installdirs -p$(p_udeb) \
@@ -1317,7 +1501,7 @@ binary-arch: build-arch install
 	-dh_icons -a || dh_iconcache -a
 #	dh_installmime -a
 	dh_installchangelogs -a
-	for i in $(p_dev) $(p_dbg) $(p_venv) $(p_full); do \
+	for i in $(p_dev) $(p_dbg) $(p_nogil) $(p_venv) $(p_full); do \
 	  rm -rf debian/$$i/usr/share/doc/$$i; \
 	  ln -s $(p_base) debian/$$i/usr/share/doc/$$i; \
 	done
@@ -1325,7 +1509,7 @@ binary-arch: build-arch install
 	  rm -rf debian/$$i/usr/share/doc/$$i; \
 	  ln -s $(p_lmin) debian/$$i/usr/share/doc/$$i; \
 	done
-	for i in $(p_ldev) $(p_ldbg) $(p_lib); do \
+	for i in $(p_ldev) $(p_ldbg) $(p_lnogil) $(p_lib); do \
 	  rm -rf debian/$$i/usr/share/doc/$$i; \
 	  ln -s $(p_lbase) debian/$$i/usr/share/doc/$$i; \
 	done
@@ -1337,7 +1521,7 @@ ifneq ($(with_gdbm),yes)
 	rm -f $(d_lbase)/$(scriptdir)/lib-dynload/_gdbm*.so
 endif
 
-	find $(d_ldbg) $(d_ldev) -name '*.a' ! -type l \
+	find $(d_ldbg) $(d_lnogil) $(d_ldev) -name '*.a' ! -type l \
 		| xargs -n 1 $(DEB_HOST_GNU_TYPE)-objcopy -p --remove-section=.gnu.lto_.*
 	dh_strip -a -N$(p_dbg) -N$(p_ldbg) -Xdebug -Xdbg --dbg-package=$(p_dbg)
 	mkdir -p $(d_dbg)/usr/share/gdb/auto-load/usr/bin

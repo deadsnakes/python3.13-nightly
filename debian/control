@@ -198,6 +198,31 @@ Description: Debug Build of the Python Interpreter (version 3.13)
  .
  See the README.debug for more information.
 
+Package: python3.13-nogil
+Section: debug
+Architecture: any
+Multi-Arch: allowed
+Depends: python3.13 (= ${binary:Version}), libpython3.13-nogil (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Recommends: gdb
+Suggests: python3.13-gdbm-nogil, python3.13-tk-nogil
+Description: No-GIL Build of the Python Interpreter (version 3.13)
+ The package holds two things:
+ .
+ - A Python interpreter configured with --disable-gil. Dynamically loaded modules
+   are searched as <foo>_t.so first. Third party extensions need a separate
+   build to be used by this interpreter.
+
+Package: libpython3.13-nogil
+Section: debug
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: libpython3.13-stdlib (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: No-GIL Build of the Python Interpreter (version 3.13)
+ The package holds two things:
+ .
+ - Extensions for a Python interpreter configured with --pydebug.
+
 Package: python3.13-tk
 Architecture: any
 Multi-Arch: same
@@ -241,6 +266,30 @@ Description: GNU dbm database support for Python (version 3.13 debug extension)
  create or read GNU dbm database files with Python.
  .
  This package contains the extensions built for the Python debug interpreter.
+
+Package: python3.13-tk-nogil
+Architecture: any
+Multi-Arch: same
+Priority: extra
+Section: debug
+Depends: python3.13-nogil, ${python:Depends}, python3.13-tk (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Tkinter - Writing Tk applications with Python (version 3.13 nogil extension)
+ A module for writing portable GUI applications with Python (version 3.13)
+ using Tk. Also known as Tkinter.
+ .
+ This package contains the extensions built for the Python nogil interpreter.
+
+Package: python3.13-gdbm-nogil
+Architecture: any
+Multi-Arch: same
+Priority: extra
+Section: debug
+Depends: python3.13-nogil, ${python:Depends}, python3.13-gdbm (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: GNU dbm database support for Python (version 3.13 nogil extension)
+ GNU dbm database module for Python (version 3.13). Install this if you want to
+ create or read GNU dbm database files with Python.
+ .
+ This package contains the extensions built for the Python nogil interpreter.
 
 Package: python3.13-full
 Architecture: any
