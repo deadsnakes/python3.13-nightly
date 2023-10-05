@@ -8,10 +8,10 @@ Subject: multiarch
  2 files changed, 7 insertions(+)
 
 diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py
-index 655d809..5d108a3 100644
+index 7b3b71e..fca69b8 100644
 --- a/Lib/sysconfig.py
 +++ b/Lib/sysconfig.py
-@@ -717,6 +717,12 @@ def _init_config_vars():
+@@ -721,6 +721,12 @@ def _init_config_vars():
          # the init-function.
          _CONFIG_VARS['userbase'] = _getuserbase()
  
@@ -25,7 +25,7 @@ index 655d809..5d108a3 100644
      srcdir = _CONFIG_VARS.get('srcdir', _PROJECT_BASE)
      if os.name == 'posix':
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index cf03c86..fe995c7 100644
+index 97eb767..58aa573 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
 @@ -1368,6 +1368,7 @@ Modules/signalmodule.o: $(srcdir)/Modules/signalmodule.c $(srcdir)/Modules/posix
