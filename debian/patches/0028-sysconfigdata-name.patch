@@ -15,7 +15,7 @@ Forwarded: no
  3 files changed, 6 insertions(+), 4 deletions(-)
 
 diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py
-index 5d108a3..05b4ad7 100644
+index fca69b8..ec7beaa 100644
 --- a/Lib/sysconfig.py
 +++ b/Lib/sysconfig.py
 @@ -501,7 +501,7 @@ def _get_sysconfigdata_name():
@@ -28,7 +28,7 @@ index 5d108a3..05b4ad7 100644
  
  def _print_config_dict(d, stream):
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index 38d0aa3..2e18c13 100644
+index 288e8b3..bdf877a 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
 @@ -2311,8 +2311,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
