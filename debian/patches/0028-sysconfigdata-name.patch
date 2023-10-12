@@ -28,10 +28,10 @@ index fca69b8..ec7beaa 100644
  
  def _print_config_dict(d, stream):
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index 1a70699..f1d34f7 100644
+index f5f41a9..a895001 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2314,8 +2314,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
+@@ -2332,8 +2332,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
  			esac; \
  		done; \
  	done
@@ -45,7 +45,7 @@ index 1a70699..f1d34f7 100644
  	@ # Build PYC files for the 3 optimization levels (0, 1, 2)
  	-PYTHONPATH=$(DESTDIR)$(LIBDEST) $(RUNSHARED) \
 diff --git a/configure.ac b/configure.ac
-index c04643e..09d5fb0 100644
+index c06b935..f257fe5 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -167,7 +167,7 @@ AC_ARG_WITH([build-python],
