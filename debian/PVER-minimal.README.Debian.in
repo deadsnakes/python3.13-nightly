@@ -137,7 +137,7 @@ are:
   struct		module
   subprocess		module
   sys			builtin
-  sysconfig		module
+  sysconfig		package
   syslog		extension
   tempfile		module
   textwrap		module
