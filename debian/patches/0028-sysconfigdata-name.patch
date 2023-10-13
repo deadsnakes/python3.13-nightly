@@ -9,16 +9,16 @@ Description: Don't encode the MACHDEP into the _sysconfigdata file name.
 Bug-cpython: https://bugs.python.org/issue37561
 Forwarded: no
 ---
- Lib/sysconfig.py | 2 +-
- Makefile.pre.in  | 6 ++++--
- configure.ac     | 2 +-
+ Lib/sysconfig/__init__.py | 2 +-
+ Makefile.pre.in           | 6 ++++--
+ configure.ac              | 2 +-
  3 files changed, 6 insertions(+), 4 deletions(-)
 
-diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py
-index fca69b8..ec7beaa 100644
---- a/Lib/sysconfig.py
-+++ b/Lib/sysconfig.py
-@@ -501,7 +501,7 @@ def _get_sysconfigdata_name():
+diff --git a/Lib/sysconfig/__init__.py b/Lib/sysconfig/__init__.py
+index 322aa02..3b3bce3 100644
+--- a/Lib/sysconfig/__init__.py
++++ b/Lib/sysconfig/__init__.py
+@@ -367,7 +367,7 @@ def _get_sysconfigdata_name():
      multiarch = getattr(sys.implementation, '_multiarch', '')
      return os.environ.get(
          '_PYTHON_SYSCONFIGDATA_NAME',
@@ -26,12 +26,12 @@ index fca69b8..ec7beaa 100644
 +        f'_sysconfigdata_{sys.abiflags}_{multiarch}',
      )
  
- def _print_config_dict(d, stream):
+ def _init_posix(vars):
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index f5f41a9..a895001 100644
+index beec28e..af503cc 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2332,8 +2332,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
+@@ -2333,8 +2333,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
  			esac; \
  		done; \
  	done

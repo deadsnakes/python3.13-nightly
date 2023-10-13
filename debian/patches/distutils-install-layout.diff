@@ -3,10 +3,10 @@ Date: Thu, 14 Feb 2019 18:59:14 -0800
 Subject: distutils-install-layout
 
 ---
- Lib/pydoc.py          |  1 +
- Lib/site.py           | 26 +++++++++++++++++++++-----
- Lib/sysconfig.py      | 49 ++++++++++++++++++++++++++++++++++++++++++++-----
- Lib/test/test_site.py |  6 +++---
+ Lib/pydoc.py              |  1 +
+ Lib/site.py               | 26 ++++++++++++++++++++-----
+ Lib/sysconfig/__init__.py | 49 ++++++++++++++++++++++++++++++++++++++++++-----
+ Lib/test/test_site.py     |  6 +++---
  4 files changed, 69 insertions(+), 13 deletions(-)
 
 diff --git a/Lib/pydoc.py b/Lib/pydoc.py
@@ -70,10 +70,10 @@ index 672fa7b..4636326 100644
          else:
              sitepackages.append(prefix)
              sitepackages.append(os.path.join(prefix, "Lib", "site-packages"))
-diff --git a/Lib/sysconfig.py b/Lib/sysconfig.py
-index edfe451..7b3b71e 100644
---- a/Lib/sysconfig.py
-+++ b/Lib/sysconfig.py
+diff --git a/Lib/sysconfig/__init__.py b/Lib/sysconfig/__init__.py
+index 68d30c0..4439b43 100644
+--- a/Lib/sysconfig/__init__.py
++++ b/Lib/sysconfig/__init__.py
 @@ -96,6 +96,30 @@
          'scripts': '{base}/Scripts',
          'data': '{base}',
@@ -105,7 +105,7 @@ index edfe451..7b3b71e 100644
      }
  
  # For the OS-native venv scheme, we essentially provide an alias:
-@@ -294,11 +318,26 @@ def _get_preferred_schemes():
+@@ -288,11 +312,26 @@ def _get_preferred_schemes():
              'home': 'posix_home',
              'user': 'osx_framework_user',
          }
