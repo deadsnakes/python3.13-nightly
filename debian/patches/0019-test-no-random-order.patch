@@ -7,7 +7,7 @@ Subject: test-no-random-order
  1 file changed, 1 deletion(-)
 
 diff --git a/Lib/test/libregrtest/cmdline.py b/Lib/test/libregrtest/cmdline.py
-index dd4cd33..39a0c26 100644
+index 5a01f1d..26ad632 100644
 --- a/Lib/test/libregrtest/cmdline.py
 +++ b/Lib/test/libregrtest/cmdline.py
 @@ -404,7 +404,6 @@ def _parse_args(args, **kwargs):
@@ -16,5 +16,5 @@ index dd4cd33..39a0c26 100644
              ns.use_mp = 0
 -        ns.randomize = True
          ns.fail_env_changed = True
-         ns.fail_rerun = True
          if ns.python is None:
+             ns.rerun = True
