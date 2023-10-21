@@ -1069,6 +1069,9 @@ New Features
   limited C API.
   (Contributed by Victor Stinner in :gh:`85283`.)
 
+* Add :c:func:`PyUnicode_AsUTF8` function to the limited C API.
+  (Contributed by Victor Stinner in :gh:`111089`.)
+
 
 Porting to Python 3.13
 ----------------------
@@ -1108,6 +1111,12 @@ Porting to Python 3.13
   :c:macro:`!Py_BUILD_CORE_BUILTIN` and :c:macro:`!Py_BUILD_CORE_MODULE` macros
   are now undefined by ``<Python.h>``.
   (Contributed by Victor Stinner in :gh:`85283`.)
+
+* The :c:func:`PyUnicode_AsUTF8` function now raises an exception if the string
+  contains embedded null characters. To accept embedded null characters and
+  truncate on purpose at the first null byte,
+  ``PyUnicode_AsUTF8AndSize(unicode, NULL)`` can be used instead.
+  (Contributed by Victor Stinner in :gh:`111089`.)
 
 Deprecated
 ----------
