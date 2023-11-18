@@ -28,10 +28,10 @@ index 322aa02..3b3bce3 100644
  
  def _init_posix(vars):
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index be55da1..bf5125c 100644
+index a8c6a8d..d91dadd 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2370,8 +2370,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
+@@ -2372,8 +2372,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
  			esac; \
  		done; \
  	done
@@ -45,10 +45,10 @@ index be55da1..bf5125c 100644
  	@ # Build PYC files for the 3 optimization levels (0, 1, 2)
  	-PYTHONPATH=$(DESTDIR)$(LIBDEST) $(RUNSHARED) \
 diff --git a/configure.ac b/configure.ac
-index e444774..9be2cad 100644
+index 73c6284..70b0545 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -167,7 +167,7 @@ AC_ARG_WITH([build-python],
+@@ -164,7 +164,7 @@ AC_ARG_WITH([build-python],
      dnl Build Python interpreter is used for regeneration and freezing.
      ac_cv_prog_PYTHON_FOR_REGEN=$with_build_python
      PYTHON_FOR_FREEZE="$with_build_python"
