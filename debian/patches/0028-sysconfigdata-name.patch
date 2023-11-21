@@ -15,7 +15,7 @@ Forwarded: no
  3 files changed, 6 insertions(+), 4 deletions(-)
 
 diff --git a/Lib/sysconfig/__init__.py b/Lib/sysconfig/__init__.py
-index 322aa02..3b3bce3 100644
+index 2a917bb..41e49f3 100644
 --- a/Lib/sysconfig/__init__.py
 +++ b/Lib/sysconfig/__init__.py
 @@ -367,7 +367,7 @@ def _get_sysconfigdata_name():
@@ -45,7 +45,7 @@ index a8c6a8d..d91dadd 100644
  	@ # Build PYC files for the 3 optimization levels (0, 1, 2)
  	-PYTHONPATH=$(DESTDIR)$(LIBDEST) $(RUNSHARED) \
 diff --git a/configure.ac b/configure.ac
-index 73c6284..70b0545 100644
+index 2ea120f..a20b047 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -164,7 +164,7 @@ AC_ARG_WITH([build-python],
