@@ -7,7 +7,7 @@ Subject: test-no-random-order
  1 file changed, 1 deletion(-)
 
 diff --git a/Lib/test/libregrtest/cmdline.py b/Lib/test/libregrtest/cmdline.py
-index a5f02d6..dd8ca09 100644
+index 0053bce..6e39f0f 100644
 --- a/Lib/test/libregrtest/cmdline.py
 +++ b/Lib/test/libregrtest/cmdline.py
 @@ -420,7 +420,6 @@ def _parse_args(args, **kwargs):
