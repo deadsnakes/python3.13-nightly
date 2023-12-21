@@ -2197,6 +2197,84 @@ class ClinicParserTest(TestCase):
                 expected_error = err_template.format(invalid_kind)
                 self.expect_failure(block, expected_error, lineno=3)
 
+    def test_invalid_getset(self):
+        annotations = ["@getter", "@setter"]
+        for annotation in annotations:
+            with self.subTest(annotation=annotation):
+                block = f"""
+                    module foo
+                    class Foo "" ""
+                    {annotation}
+                    Foo.property -> int
+                """
+                expected_error = f"{annotation} method cannot define a return type"
+                self.expect_failure(block, expected_error, lineno=3)
+
+                block = f"""
+                   module foo
+                   class Foo "" ""
+                   {annotation}
+                   Foo.property
+                       obj: int
+                       /
+                """
+                expected_error = f"{annotation} method cannot define parameters"
+                self.expect_failure(block, expected_error)
+
+    def test_setter_docstring(self):
+        block = """
+            module foo
+            class Foo "" ""
+            @setter
+            Foo.property
+
+            foo
+
+            bar
+            [clinic start generated code]*/
+        """
+        expected_error = "docstrings are only supported for @getter, not @setter"
+        self.expect_failure(block, expected_error)
+
+    def test_duplicate_getset(self):
+        annotations = ["@getter", "@setter"]
+        for annotation in annotations:
+            with self.subTest(annotation=annotation):
+                block = f"""
+                    module foo
+                    class Foo "" ""
+                    {annotation}
+                    {annotation}
+                    Foo.property -> int
+                """
+                expected_error = f"Cannot apply {annotation} twice to the same function!"
+                self.expect_failure(block, expected_error, lineno=3)
+
+    def test_getter_and_setter_disallowed_on_same_function(self):
+        dup_annotations = [("@getter", "@setter"), ("@setter", "@getter")]
+        for dup in dup_annotations:
+            with self.subTest(dup=dup):
+                block = f"""
+                    module foo
+                    class Foo "" ""
+                    {dup[0]}
+                    {dup[1]}
+                    Foo.property -> int
+                """
+                expected_error = "Cannot apply both @getter and @setter to the same function!"
+                self.expect_failure(block, expected_error, lineno=3)
+
+    def test_getset_no_class(self):
+        for annotation in "@getter", "@setter":
+            with self.subTest(annotation=annotation):
+                block = f"""
+                    module m
+                    {annotation}
+                    m.func
+                """
+                expected_error = "@getter and @setter must be methods"
+                self.expect_failure(block, expected_error, lineno=2)
+
     def test_duplicate_coexist(self):
         err = "Called @coexist twice"
         block = """
