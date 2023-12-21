@@ -112,7 +112,7 @@ are:
   operator		module
   optparse		module
   os			module
-  pathlib		module
+  pathlib		package
   pickle		module
   pkgutil		module
   platform		module
