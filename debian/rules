@@ -848,7 +848,6 @@ endif
 
 	: # fix some file permissions
 	chmod a-x $(d)/$(scriptdir)/{runpy,fractions}.py
-	chmod a-x $(d)/$(scriptdir)/test/test_pathlib.py
 
 #	: # move manpages to new names
 #	if [ -d $(d)/usr/man/man1 ]; then \
