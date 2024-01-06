@@ -15,10 +15,10 @@ Forwarded: no
  3 files changed, 6 insertions(+), 4 deletions(-)
 
 diff --git a/Lib/sysconfig/__init__.py b/Lib/sysconfig/__init__.py
-index f70cb1a..bfdc796 100644
+index ec02dd7..add2b57 100644
 --- a/Lib/sysconfig/__init__.py
 +++ b/Lib/sysconfig/__init__.py
-@@ -367,7 +367,7 @@ def _get_sysconfigdata_name():
+@@ -369,7 +369,7 @@ def _get_sysconfigdata_name():
      multiarch = getattr(sys.implementation, '_multiarch', '')
      return os.environ.get(
          '_PYTHON_SYSCONFIGDATA_NAME',
@@ -28,10 +28,10 @@ index f70cb1a..bfdc796 100644
  
  def _init_posix(vars):
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index c394cf3..c2f07e8 100644
+index 7feb009..64fc099 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2392,8 +2392,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
+@@ -2390,8 +2390,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
  			esac; \
  		done; \
  	done
@@ -45,7 +45,7 @@ index c394cf3..c2f07e8 100644
  	@ # Build PYC files for the 3 optimization levels (0, 1, 2)
  	-PYTHONPATH=$(DESTDIR)$(LIBDEST) $(RUNSHARED) \
 diff --git a/configure.ac b/configure.ac
-index 8f8889f..58a1376 100644
+index 1bac58d..322e446 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -164,7 +164,7 @@ AC_ARG_WITH([build-python],
