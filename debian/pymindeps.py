@@ -116,6 +116,7 @@ excluded_imports = {
     #'hashlib': set(('_hashlib', '_md5', '_sha', '_sha2',)),
     'heapq': set(('doctest',)),
     'importlib': set(('csv', 'email', 'zipfile')),
+    'importlib.metadata': {'json'},
     #'io': set(('_dummy_thread',)),
     'logging': set(('multiprocessing',)),
     'os': set(('nt', 'ntpath', 'os2', 'os2emxpath', 'mac', 'macpath',
