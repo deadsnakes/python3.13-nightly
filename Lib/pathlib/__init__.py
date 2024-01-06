@@ -9,6 +9,8 @@ import io
 import ntpath
 import os
 import posixpath
+import sys
+import warnings
 
 try:
     import pwd
@@ -59,6 +61,7 @@ class PurePath(_abc.PurePathBase):
         # path. It's set when `__hash__()` is called for the first time.
         '_hash',
     )
+    pathmod = os.path
 
     def __new__(cls, *args, **kwargs):
         """Construct a PurePath from one or several strings and or existing
@@ -98,6 +101,9 @@ class PurePath(_abc.PurePathBase):
         # Using the parts tuple helps share interned path parts
         # when pickling related paths.
         return (self.__class__, self.parts)
+
+    def __repr__(self):
+        return "{}({!r})".format(self.__class__.__name__, self.as_posix())
 
     def __fspath__(self):
         return str(self)
@@ -159,6 +165,33 @@ class PurePath(_abc.PurePathBase):
         if not isinstance(other, PurePath) or self.pathmod is not other.pathmod:
             return NotImplemented
         return self._parts_normcase >= other._parts_normcase
+
+    def relative_to(self, other, /, *_deprecated, walk_up=False):
+        """Return the relative path to another path identified by the passed
+        arguments.  If the operation is not possible (because this is not
+        related to the other path), raise ValueError.
+
+        The *walk_up* parameter controls whether `..` may be used to resolve
+        the path.
+        """
+        if _deprecated:
+            msg = ("support for supplying more than one positional argument "
+                   "to pathlib.PurePath.relative_to() is deprecated and "
+                   "scheduled for removal in Python 3.14")
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            other = self.with_segments(other, *_deprecated)
+        return _abc.PurePathBase.relative_to(self, other, walk_up=walk_up)
+
+    def is_relative_to(self, other, /, *_deprecated):
+        """Return True if the path is relative to another path or False.
+        """
+        if _deprecated:
+            msg = ("support for supplying more than one argument to "
+                   "pathlib.PurePath.is_relative_to() is deprecated and "
+                   "scheduled for removal in Python 3.14")
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            other = self.with_segments(other, *_deprecated)
+        return _abc.PurePathBase.is_relative_to(self, other)
 
     def as_uri(self):
         """Return the path as a URI."""
@@ -226,7 +259,6 @@ class Path(_abc.PathBase, PurePath):
 
     def __init__(self, *args, **kwargs):
         if kwargs:
-            import warnings
             msg = ("support for supplying keyword arguments to pathlib.PurePath "
                    "is deprecated and scheduled for removal in Python {remove}")
             warnings._deprecated("pathlib.PurePath(**kwargs)", msg, remove=(3, 14))
@@ -266,6 +298,24 @@ class Path(_abc.PathBase, PurePath):
             encoding = io.text_encoding(encoding)
         return io.open(self, mode, buffering, encoding, errors, newline)
 
+    def read_text(self, encoding=None, errors=None, newline=None):
+        """
+        Open the file in text mode, read it, and close the file.
+        """
+        # Call io.text_encoding() here to ensure any warning is raised at an
+        # appropriate stack level.
+        encoding = io.text_encoding(encoding)
+        return _abc.PathBase.read_text(self, encoding, errors, newline)
+
+    def write_text(self, data, encoding=None, errors=None, newline=None):
+        """
+        Open the file in text mode, write to it, and close the file.
+        """
+        # Call io.text_encoding() here to ensure any warning is raised at an
+        # appropriate stack level.
+        encoding = io.text_encoding(encoding)
+        return _abc.PathBase.write_text(self, data, encoding, errors, newline)
+
     def iterdir(self):
         """Yield path objects of the directory contents.
 
@@ -276,6 +326,56 @@ class Path(_abc.PathBase, PurePath):
 
     def _scandir(self):
         return os.scandir(self)
+
+    def _make_child_entry(self, entry):
+        # Transform an entry yielded from _scandir() into a path object.
+        path_str = entry.name if str(self) == '.' else entry.path
+        path = self.with_segments(path_str)
+        path._str = path_str
+        path._drv = self.drive
+        path._root = self.root
+        path._tail_cached = self._tail + [entry.name]
+        return path
+
+    def glob(self, pattern, *, case_sensitive=None, follow_symlinks=None):
+        """Iterate over this subtree and yield all existing files (of any
+        kind, including directories) matching the given relative pattern.
+        """
+        sys.audit("pathlib.Path.glob", self, pattern)
+        if pattern.endswith('**'):
+            # GH-70303: '**' only matches directories. Add trailing slash.
+            warnings.warn(
+                "Pattern ending '**' will match files and directories in a "
+                "future Python release. Add a trailing slash to match only "
+                "directories and remove this warning.",
+                FutureWarning, 2)
+            pattern = f'{pattern}/'
+        return _abc.PathBase.glob(
+            self, pattern, case_sensitive=case_sensitive, follow_symlinks=follow_symlinks)
+
+    def rglob(self, pattern, *, case_sensitive=None, follow_symlinks=None):
+        """Recursively yield all existing files (of any kind, including
+        directories) matching the given relative pattern, anywhere in
+        this subtree.
+        """
+        sys.audit("pathlib.Path.rglob", self, pattern)
+        if pattern.endswith('**'):
+            # GH-70303: '**' only matches directories. Add trailing slash.
+            warnings.warn(
+                "Pattern ending '**' will match files and directories in a "
+                "future Python release. Add a trailing slash to match only "
+                "directories and remove this warning.",
+                FutureWarning, 2)
+            pattern = f'{pattern}/'
+        pattern = f'**/{pattern}'
+        return _abc.PathBase.glob(
+            self, pattern, case_sensitive=case_sensitive, follow_symlinks=follow_symlinks)
+
+    def walk(self, top_down=True, on_error=None, follow_symlinks=False):
+        """Walk the directory tree from this directory, similar to os.walk()."""
+        sys.audit("pathlib.Path.walk", self, on_error, follow_symlinks)
+        return _abc.PathBase.walk(
+            self, top_down=top_down, on_error=on_error, follow_symlinks=follow_symlinks)
 
     def absolute(self):
         """Return an absolute version of this path
