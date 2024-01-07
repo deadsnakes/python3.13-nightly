@@ -22,7 +22,7 @@ index 250e29e..302e411 100755
              object.__name__ not in ('xml.etree', 'test.pydoc_mod')):
              if docloc.startswith(("http://", "https://")):
 diff --git a/Lib/site.py b/Lib/site.py
-index 6f5738b..613a86b 100644
+index eea92df..ab0b31e 100644
 --- a/Lib/site.py
 +++ b/Lib/site.py
 @@ -7,12 +7,18 @@
@@ -138,10 +138,10 @@ index 07ab27c..ed1b417 100644
  
  def get_preferred_scheme(key):
 diff --git a/Lib/test/test_site.py b/Lib/test/test_site.py
-index 9f199d9..1b05ff4 100644
+index e26b48e..f44ad8f 100644
 --- a/Lib/test/test_site.py
 +++ b/Lib/test/test_site.py
-@@ -285,16 +285,16 @@ def test_getsitepackages(self):
+@@ -286,16 +286,16 @@ def test_getsitepackages(self):
          if os.sep == '/':
              # OS X, Linux, FreeBSD, etc
              if sys.platlibdir != "lib":
