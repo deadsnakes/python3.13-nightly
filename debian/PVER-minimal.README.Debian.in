@@ -50,6 +50,7 @@ are:
   _string		builtin
   _stringio		builtin
   _strptime		module
+  _suggestions		builtin
   _symtable		builtin
   _sysconfig		builtin
   _thread		builtin
