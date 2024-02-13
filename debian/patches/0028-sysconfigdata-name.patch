@@ -28,10 +28,10 @@ index ec02dd7..add2b57 100644
  
  def _init_posix(vars):
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index be0a6da..cb32755 100644
+index dffc76f..34f63c1 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2417,8 +2417,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
+@@ -2418,8 +2418,10 @@ libinstall:	all $(srcdir)/Modules/xxmodule.c
  			esac; \
  		done; \
  	done
@@ -45,7 +45,7 @@ index be0a6da..cb32755 100644
  	@ # Build PYC files for the 3 optimization levels (0, 1, 2)
  	-PYTHONPATH=$(DESTDIR)$(LIBDEST) $(RUNSHARED) \
 diff --git a/configure.ac b/configure.ac
-index bc20332..2ba102d 100644
+index 21a2446..ba2783b 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -164,7 +164,7 @@ AC_ARG_WITH([build-python],
