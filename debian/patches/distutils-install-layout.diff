@@ -10,7 +10,7 @@ Subject: distutils-install-layout
  4 files changed, 69 insertions(+), 13 deletions(-)
 
 diff --git a/Lib/pydoc.py b/Lib/pydoc.py
-index 33ec783..818c932 100755
+index 1e01be4..0c318cb 100755
 --- a/Lib/pydoc.py
 +++ b/Lib/pydoc.py
 @@ -555,6 +555,7 @@ def getdocloc(self, object, basedir=sysconfig.get_path('stdlib')):
@@ -19,7 +19,7 @@ index 33ec783..818c932 100755
               (file.startswith(basedir) and
 +              not file.startswith(os.path.join(basedir, 'dist-packages')) and
                not file.startswith(os.path.join(basedir, 'site-packages')))) and
-             object.__name__ not in ('xml.etree', 'test.pydoc_mod')):
+             object.__name__ not in ('xml.etree', 'test.test_pydoc.pydoc_mod')):
              if docloc.startswith(("http://", "https://")):
 diff --git a/Lib/site.py b/Lib/site.py
 index 0631f3f..bd0e507 100644
