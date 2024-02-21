@@ -10,10 +10,10 @@ Subject: distutils-install-layout
  4 files changed, 69 insertions(+), 13 deletions(-)
 
 diff --git a/Lib/pydoc.py b/Lib/pydoc.py
-index f0c0cf0..12eeb25 100755
+index 1cb1b66..fc05330 100755
 --- a/Lib/pydoc.py
 +++ b/Lib/pydoc.py
-@@ -555,6 +555,7 @@ def getdocloc(self, object, basedir=sysconfig.get_path('stdlib')):
+@@ -554,6 +554,7 @@ def getdocloc(self, object, basedir=sysconfig.get_path('stdlib')):
                                   'marshal', 'posix', 'signal', 'sys',
                                   '_thread', 'zipimport') or
               (file.startswith(basedir) and
