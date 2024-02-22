@@ -9,10 +9,10 @@ Subject: link-opt
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index b39af74..79f6cf8 100644
+index ac26486..db8f976 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -3253,8 +3253,8 @@ then
+@@ -3254,8 +3254,8 @@ then
  		LDSHARED='$(CC) -shared'
  		LDCXXSHARED='$(CXX) -shared';;
  	Linux*|GNU*|QNX*|VxWorks*|Haiku*)
