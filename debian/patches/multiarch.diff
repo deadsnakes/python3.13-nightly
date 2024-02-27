@@ -25,7 +25,7 @@ index ed1b417..ec02dd7 100644
      srcdir = _CONFIG_VARS.get('srcdir', _PROJECT_BASE)
      if os.name == 'posix':
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index 8893da8..a2c6f36 100644
+index e4c64ae..b9767e2 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
 @@ -1699,6 +1699,7 @@ Python/crossinterp.o: $(srcdir)/Python/crossinterp.c $(srcdir)/Python/crossinter

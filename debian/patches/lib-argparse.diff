@@ -7,7 +7,7 @@ Subject: lib-argparse
  1 file changed, 10 insertions(+), 1 deletion(-)
 
 diff --git a/Lib/argparse.py b/Lib/argparse.py
-index f86658b..d23b10c 100644
+index 4200dd5..b92c4ca 100644
 --- a/Lib/argparse.py
 +++ b/Lib/argparse.py
 @@ -89,7 +89,16 @@
