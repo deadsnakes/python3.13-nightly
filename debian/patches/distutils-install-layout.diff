@@ -22,7 +22,7 @@ index d3b03de..9ad88d7 100755
              object.__name__ not in ('xml.etree', 'test.test_pydoc.pydoc_mod')):
              if docloc.startswith(("http://", "https://")):
 diff --git a/Lib/site.py b/Lib/site.py
-index 0631f3f..bd0e507 100644
+index 2aee63e..b960fe7 100644
 --- a/Lib/site.py
 +++ b/Lib/site.py
 @@ -7,12 +7,18 @@
