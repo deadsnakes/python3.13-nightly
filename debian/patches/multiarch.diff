@@ -25,10 +25,10 @@ index ed1b417..ec02dd7 100644
      srcdir = _CONFIG_VARS.get('srcdir', _PROJECT_BASE)
      if os.name == 'posix':
 diff --git a/Makefile.pre.in b/Makefile.pre.in
-index b1aaa59..d706ecf 100644
+index 3cf4de0..bbbc66a 100644
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -1698,6 +1698,7 @@ Python/crossinterp.o: $(srcdir)/Python/crossinterp.c $(srcdir)/Python/crossinter
+@@ -1722,6 +1722,7 @@ Python/crossinterp.o: $(srcdir)/Python/crossinterp.c $(srcdir)/Python/crossinter
  
  Python/dynload_shlib.o: $(srcdir)/Python/dynload_shlib.c Makefile
  	$(CC) -c $(PY_CORE_CFLAGS) \
