@@ -968,16 +968,14 @@
             args = &stack_pointer[-oparg];
             self_or_null = stack_pointer[-1 - oparg];
             {
-                int argcount = oparg;
-                if (self_or_null != NULL) {
-                    args--;
-                    argcount++;
-                }
+                int has_self = (self_or_null != NULL);
                 STAT_INC(CALL, hit);
                 PyFunctionObject *func = (PyFunctionObject *)callable;
-                new_frame = _PyFrame_PushUnchecked(tstate, func, argcount);
-                for (int i = 0; i < argcount; i++) {
-                    new_frame->localsplus[i] = args[i];
+                new_frame = _PyFrame_PushUnchecked(tstate, func, oparg + has_self);
+                PyObject **first_non_self_local = new_frame->localsplus + has_self;
+                new_frame->localsplus[0] = self_or_null;
+                for (int i = 0; i < oparg; i++) {
+                    first_non_self_local[i] = args[i];
                 }
             }
             // _SAVE_RETURN_OFFSET
@@ -1174,14 +1172,12 @@
                 DEOPT_IF(total_args != 1, CALL);
                 DEOPT_IF(!PyCFunction_CheckExact(callable), CALL);
                 DEOPT_IF(PyCFunction_GET_FLAGS(callable) != METH_O, CALL);
+                // CPython promises to check all non-vectorcall function calls.
+                DEOPT_IF(tstate->c_recursion_remaining <= 0, CALL);
                 STAT_INC(CALL, hit);
                 PyCFunction cfunc = PyCFunction_GET_FUNCTION(callable);
-                // This is slower but CPython promises to check all non-vectorcall
-                // function calls.
-                if (_Py_EnterRecursiveCallTstate(tstate, " while calling a Python object")) {
-                    GOTO_ERROR(error);
-                }
                 PyObject *arg = args[0];
+                _Py_EnterRecursiveCallTstateUnchecked(tstate);
                 res = _PyCFunction_TrampolineCall(cfunc, PyCFunction_GET_SELF(callable), arg);
                 _Py_LeaveRecursiveCallTstate(tstate);
                 assert((res != NULL) ^ (_PyErr_Occurred(tstate) != NULL));
@@ -1229,7 +1225,7 @@
             EVAL_CALL_STAT_INC_IF_FUNCTION(EVAL_CALL_FUNCTION_EX, func);
             if (opcode == INSTRUMENTED_CALL_FUNCTION_EX) {
                 PyObject *arg = PyTuple_GET_SIZE(callargs) > 0 ?
-                PyTuple_GET_ITEM(callargs, 0) : Py_None;
+                PyTuple_GET_ITEM(callargs, 0) : &_PyInstrumentation_MISSING;
                 int err = _Py_call_instrumentation_2args(
                     tstate, PY_MONITORING_EVENT_CALL,
                     frame, this_instr, func, arg);
@@ -1350,10 +1346,12 @@
             }
             res = PyBool_FromLong(retval);
             assert((res != NULL) ^ (_PyErr_Occurred(tstate) != NULL));
+            if (res == NULL) {
+                GOTO_ERROR(error);
+            }
             Py_DECREF(inst);
             Py_DECREF(cls);
             Py_DECREF(callable);
-            if (res == NULL) { stack_pointer += -2 - oparg; goto error; }
             stack_pointer[-2 - oparg] = res;
             stack_pointer += -1 - oparg;
             DISPATCH();
@@ -1481,9 +1479,11 @@
             }
             res = PyLong_FromSsize_t(len_i);
             assert((res != NULL) ^ (_PyErr_Occurred(tstate) != NULL));
+            if (res == NULL) {
+                GOTO_ERROR(error);
+            }
             Py_DECREF(callable);
             Py_DECREF(arg);
-            if (res == NULL) { stack_pointer += -2 - oparg; goto error; }
             stack_pointer[-2 - oparg] = res;
             stack_pointer += -1 - oparg;
             DISPATCH();
@@ -1649,13 +1649,11 @@
                 PyObject *self = args[0];
                 DEOPT_IF(!Py_IS_TYPE(self, method->d_common.d_type), CALL);
                 DEOPT_IF(meth->ml_flags != METH_NOARGS, CALL);
+                // CPython promises to check all non-vectorcall function calls.
+                DEOPT_IF(tstate->c_recursion_remaining <= 0, CALL);
                 STAT_INC(CALL, hit);
                 PyCFunction cfunc = meth->ml_meth;
-                // This is slower but CPython promises to check all non-vectorcall
-                // function calls.
-                if (_Py_EnterRecursiveCallTstate(tstate, " while calling a Python object")) {
-                    GOTO_ERROR(error);
-                }
+                _Py_EnterRecursiveCallTstateUnchecked(tstate);
                 res = _PyCFunction_TrampolineCall(cfunc, self, NULL);
                 _Py_LeaveRecursiveCallTstate(tstate);
                 assert((res != NULL) ^ (_PyErr_Occurred(tstate) != NULL));
@@ -1698,16 +1696,14 @@
                 DEOPT_IF(!Py_IS_TYPE(method, &PyMethodDescr_Type), CALL);
                 PyMethodDef *meth = method->d_method;
                 DEOPT_IF(meth->ml_flags != METH_O, CALL);
+                // CPython promises to check all non-vectorcall function calls.
+                DEOPT_IF(tstate->c_recursion_remaining <= 0, CALL);
                 PyObject *arg = args[1];
                 PyObject *self = args[0];
                 DEOPT_IF(!Py_IS_TYPE(self, method->d_common.d_type), CALL);
                 STAT_INC(CALL, hit);
                 PyCFunction cfunc = meth->ml_meth;
-                // This is slower but CPython promises to check all non-vectorcall
-                // function calls.
-                if (_Py_EnterRecursiveCallTstate(tstate, " while calling a Python object")) {
-                    GOTO_ERROR(error);
-                }
+                _Py_EnterRecursiveCallTstateUnchecked(tstate);
                 res = _PyCFunction_TrampolineCall(cfunc, self, arg);
                 _Py_LeaveRecursiveCallTstate(tstate);
                 assert((res != NULL) ^ (_PyErr_Occurred(tstate) != NULL));
@@ -1761,16 +1757,14 @@
             args = &stack_pointer[-oparg];
             self_or_null = stack_pointer[-1 - oparg];
             {
-                int argcount = oparg;
-                if (self_or_null != NULL) {
-                    args--;
-                    argcount++;
-                }
+                int has_self = (self_or_null != NULL);
                 STAT_INC(CALL, hit);
                 PyFunctionObject *func = (PyFunctionObject *)callable;
-                new_frame = _PyFrame_PushUnchecked(tstate, func, argcount);
-                for (int i = 0; i < argcount; i++) {
-                    new_frame->localsplus[i] = args[i];
+                new_frame = _PyFrame_PushUnchecked(tstate, func, oparg + has_self);
+                PyObject **first_non_self_local = new_frame->localsplus + has_self;
+                new_frame->localsplus[0] = self_or_null;
+                for (int i = 0; i < oparg; i++) {
+                    first_non_self_local[i] = args[i];
                 }
             }
             // _SAVE_RETURN_OFFSET
