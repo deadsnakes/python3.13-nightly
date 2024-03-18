@@ -383,6 +383,16 @@ marshal
   code objects which are incompatible between Python versions.
   (Contributed by Serhiy Storchaka in :gh:`113626`.)
 
+math
+----
+
+A new function :func:`~math.fma` for fused multiply-add operations has been
+added. This function computes ``x * y + z`` with only a single round, and so
+avoids any intermediate loss of precision. It wraps the ``fma()`` function
+provided by C99, and follows the specification of the IEEE 754
+"fusedMultiplyAdd" operation for special cases.
+(Contributed by Mark Dickinson and Victor Stinner in :gh:`73468`.)
+
 mmap
 ----
 
@@ -1469,9 +1479,11 @@ Build Changes
 * Building CPython now requires a compiler with support for the C11 atomic
   library, GCC built-in atomic functions, or MSVC interlocked intrinsics.
 
-* The ``errno``, ``fcntl``, ``grp``, ``md5``, ``pwd``, ``resource``, ``winsound``,
+* The ``errno``, ``fcntl``, ``grp``, ``md5``, ``pwd``, ``resource``,
+  ``termios``, ``winsound``,
   ``_ctypes_test``, ``_multiprocessing.posixshmem``, ``_scproxy``, ``_stat``,
-  ``_testimportmultiple`` and ``_uuid`` C extensions are now built with the
+  ``_statistics``, ``_testimportmultiple`` and ``_uuid``
+  C extensions are now built with the
   :ref:`limited C API <limited-c-api>`.
   (Contributed by Victor Stinner in :gh:`85283`.)
 
