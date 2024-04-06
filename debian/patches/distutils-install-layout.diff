@@ -4,10 +4,10 @@ Subject: distutils-install-layout
 
 ---
  Lib/pydoc.py              |  1 +
- Lib/site.py               | 26 ++++++++++++++++++++-----
- Lib/sysconfig/__init__.py | 49 ++++++++++++++++++++++++++++++++++++++++++-----
+ Lib/site.py               | 26 +++++++++++++++++++-----
+ Lib/sysconfig/__init__.py | 50 +++++++++++++++++++++++++++++++++++++++++------
  Lib/test/test_site.py     |  6 +++---
- 4 files changed, 69 insertions(+), 13 deletions(-)
+ 4 files changed, 69 insertions(+), 14 deletions(-)
 
 diff --git a/Lib/pydoc.py b/Lib/pydoc.py
 index 5993b70..9380ef6 100755
@@ -22,7 +22,7 @@ index 5993b70..9380ef6 100755
              object.__name__ not in ('xml.etree', 'test.test_pydoc.pydoc_mod')):
              if docloc.startswith(("http://", "https://")):
 diff --git a/Lib/site.py b/Lib/site.py
-index 2aee63e..b960fe7 100644
+index 162bbec..80f4bfa 100644
 --- a/Lib/site.py
 +++ b/Lib/site.py
 @@ -7,12 +7,18 @@
@@ -71,10 +71,10 @@ index 2aee63e..b960fe7 100644
              sitepackages.append(prefix)
              sitepackages.append(os.path.join(prefix, "Lib", "site-packages"))
 diff --git a/Lib/sysconfig/__init__.py b/Lib/sysconfig/__init__.py
-index 07ab27c..ed1b417 100644
+index 70bdecf..26c2c33 100644
 --- a/Lib/sysconfig/__init__.py
 +++ b/Lib/sysconfig/__init__.py
-@@ -96,6 +96,30 @@
+@@ -98,6 +98,30 @@
          'scripts': '{base}/Scripts',
          'data': '{base}',
          },
@@ -105,10 +105,11 @@ index 07ab27c..ed1b417 100644
      }
  
  # For the OS-native venv scheme, we essentially provide an alias:
-@@ -290,11 +314,26 @@ def _get_preferred_schemes():
+@@ -292,12 +316,26 @@ def _get_preferred_schemes():
              'home': 'posix_home',
              'user': 'osx_framework_user',
          }
+-
 -    return {
 -        'prefix': 'posix_prefix',
 -        'home': 'posix_home',
