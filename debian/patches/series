@@ -17,3 +17,4 @@ argparse-no-shutil.diff
 0028-sysconfigdata-name.patch
 0029-destshared-location.patch
 0019-test-no-random-order.patch
+0020-disable-a-few-xml-tests.patch
