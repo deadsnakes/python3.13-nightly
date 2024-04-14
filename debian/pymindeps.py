@@ -125,7 +125,7 @@ excluded_imports = {
     # XXX: pathlib actually depends on ntpath: deadsnakes/issues#176
     'pathlib': set(('ntpath', 'urllib',)), # Windows only
     'pickle': set(('argparse', 'doctest', 'pprint')),
-    'platform': {'_ios_support', 'plistlib'},
+    'platform': {'_ios_support', 'ctypes', 'plistlib'},
     'reprlib': set(('_dummy_thread',)),
     'shutil': set(('bz2','lzma', 'tarfile', 'zipfile')),
     #'socket': set(('_ssl',)),
