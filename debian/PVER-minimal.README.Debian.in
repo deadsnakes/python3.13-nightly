@@ -17,6 +17,7 @@ are:
   _codecs		builtin
   _collections		extension
   _collections_abc	module
+  _colorize		module
   _compat_pickle	module
   _csv			extension
   _datetime		extension
