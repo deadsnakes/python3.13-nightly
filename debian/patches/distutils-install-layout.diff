@@ -71,7 +71,7 @@ index 93af9c4..42f0f82 100644
              sitepackages.append(prefix)
              sitepackages.append(os.path.join(prefix, "Lib", "site-packages"))
 diff --git a/Lib/sysconfig/__init__.py b/Lib/sysconfig/__init__.py
-index 70bdecf..26c2c33 100644
+index 98a14e5..2a1798e 100644
 --- a/Lib/sysconfig/__init__.py
 +++ b/Lib/sysconfig/__init__.py
 @@ -98,6 +98,30 @@
