@@ -1,1 +1,0 @@
-Implement PEP 667 - converted ``frame.f_locals`` to a write through proxy
