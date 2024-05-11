@@ -2402,7 +2402,7 @@ class TestKDE(unittest.TestCase):
         with self.assertRaises(StatisticsError):
             kde(sample, h=0.0)                          # Zero bandwidth
         with self.assertRaises(StatisticsError):
-            kde(sample, h=0.0)                          # Negative bandwidth
+            kde(sample, h=-1.0)                         # Negative bandwidth
         with self.assertRaises(TypeError):
             kde(sample, h='str')                        # Wrong bandwidth type
         with self.assertRaises(StatisticsError):
@@ -2426,6 +2426,14 @@ class TestKDE(unittest.TestCase):
         self.assertEqual(f_hat(-1.0), 1/2)
         self.assertEqual(f_hat(1.0), 1/2)
 
+        # Test online updates to data
+
+        data = [1, 2]
+        f_hat = kde(data, 5.0, 'triangular')
+        self.assertEqual(f_hat(100), 0.0)
+        data.append(100)
+        self.assertGreater(f_hat(100), 0.0)
+
     def test_kde_kernel_invcdfs(self):
         kernel_invcdfs = statistics._kernel_invcdfs
         kde = statistics.kde
@@ -2438,6 +2446,7 @@ class TestKDE(unittest.TestCase):
                 for x in xarr:
                     self.assertAlmostEqual(invcdf(cdf(x)), x, places=5)
 
+    @support.requires_resource('cpu')
     def test_kde_random(self):
         kde_random = statistics.kde_random
         StatisticsError = statistics.StatisticsError
@@ -2462,7 +2471,7 @@ class TestKDE(unittest.TestCase):
         with self.assertRaises(TypeError):
             kde_random(iter(sample), 1.5)               # Data is not a sequence
         with self.assertRaises(StatisticsError):
-            kde_random(sample, h=0.0)                   # Zero bandwidth
+            kde_random(sample, h=-1.0)                  # Zero bandwidth
         with self.assertRaises(StatisticsError):
             kde_random(sample, h=0.0)                   # Negative bandwidth
         with self.assertRaises(TypeError):
@@ -2474,10 +2483,10 @@ class TestKDE(unittest.TestCase):
 
         h = 1.5
         kernel = 'cosine'
-        prng = kde_random(sample, h, kernel)
-        self.assertEqual(prng.__name__, 'rand')
-        self.assertIn(kernel, prng.__doc__)
-        self.assertIn(repr(h), prng.__doc__)
+        rand = kde_random(sample, h, kernel)
+        self.assertEqual(rand.__name__, 'rand')
+        self.assertIn(kernel, rand.__doc__)
+        self.assertIn(repr(h), rand.__doc__)
 
         # Approximate distribution test: Compare a random sample to the expected distribution
 
@@ -2506,6 +2515,14 @@ class TestKDE(unittest.TestCase):
 
                 for x in xarr:
                     self.assertTrue(math.isclose(p_observed(x), p_expected(x), abs_tol=0.0005))
+
+        # Test online updates to data
+
+        data = [1, 2]
+        rand = kde_random(data, 5, 'triangular')
+        self.assertLess(max([rand() for i in range(5000)]), 10)
+        data.append(100)
+        self.assertGreater(max(rand() for i in range(5000)), 10)
 
 
 class TestQuantiles(unittest.TestCase):
