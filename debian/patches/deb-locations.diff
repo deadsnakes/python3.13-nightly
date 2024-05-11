@@ -10,7 +10,7 @@ Subject: deb-locations
  2 files changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/Lib/pydoc.py b/Lib/pydoc.py
-index 02af672..c963d10 100755
+index 55ccf21..19fa875 100755
 --- a/Lib/pydoc.py
 +++ b/Lib/pydoc.py
 @@ -31,6 +31,10 @@ class or function within a module or module in a package.  If the
