@@ -97,7 +97,7 @@ Interpreter improvements:
 * :pep:`667`: The :func:`locals` builtin now has
   :ref:`defined semantics <whatsnew313-locals-semantics>` when mutating the
   returned mapping. Python debuggers and similar tools may now more reliably
-  update local variables in optimized frames even during concurrent code
+  update local variables in optimized scopes even during concurrent code
   execution.
 
 New typing features:
@@ -154,10 +154,10 @@ New Features
 A Better Interactive Interpreter
 --------------------------------
 
-On Unix-like systems like Linux or macOS, Python now uses a new
-:term:`interactive` shell. When the user starts the :term:`REPL` from an
-interactive terminal, and both :mod:`curses` and :mod:`readline` are
-available, the interactive shell now supports the following new features:
+On Unix-like systems like Linux or macOS as well as Windows, Python now
+uses a new :term:`interactive` shell. When the user starts the
+:term:`REPL` from an interactive terminal the interactive shell now
+supports the following new features:
 
 * Colorized prompts.
 * Multiline editing with history preservation.
@@ -174,10 +174,13 @@ available, the interactive shell now supports the following new features:
 If the new interactive shell is not desired, it can be disabled via
 the :envvar:`PYTHON_BASIC_REPL` environment variable.
 
+The new shell requires :mod:`curses` on Unix-like systems.
+
 For more on interactive mode, see :ref:`tut-interac`.
 
 (Contributed by Pablo Galindo Salgado, Łukasz Langa, and
-Lysandros Nikolaou in :gh:`111201` based on code from the PyPy project.)
+Lysandros Nikolaou in :gh:`111201` based on code from the PyPy project.
+Windows support contributed by Dino Viehland and Anthony Shaw.)
 
 .. _whatsnew313-improved-error-messages:
 
@@ -2128,6 +2131,11 @@ New Features
   destruction the same way the :mod:`tracemalloc` module does. (Contributed
   by Pablo Galindo in :gh:`93502`.)
 
+* Add :c:func:`PyEval_GetFrameBuiltins`, :c:func:`PyEval_GetFrameGlobals`, and
+  :c:func:`PyEval_GetFrameLocals` to the C API. These replacements for
+  :c:func:`PyEval_GetBuiltins`, :c:func:`PyEval_GetGlobals`, and
+  :c:func:`PyEval_GetLocals` return :term:`strong references <strong reference>`
+  rather than borrowed references. (Added as part of :pep:`667`.)
 
 Build Changes
 =============
@@ -2302,6 +2310,15 @@ Changes in the C API
 * :c:func:`!PyCode_GetFirstFree` is an unstable API now and has been renamed
   to :c:func:`PyUnstable_Code_GetFirstFree`.
   (Contributed by Bogdan Romanyuk in :gh:`115781`.)
+
+* :c:func:`!PyFrame_FastToLocals` and :c:func:`!PyFrame_FastToLocalsWithError`
+  no longer have any effect. Calling these functions has been redundant since
+  Python 3.11, when  :c:func:`PyFrame_GetLocals`  was first introduced.
+  (Changed as part of :pep:`667`.)
+
+* :c:func:`!PyFrame_LocalsToFast` no longer has any effect. Calling this function
+  is redundant now that :c:func:`PyFrame_GetLocals` returns a write-through proxy
+  for :term:`optimized scopes <optimized scope>`. (Changed as part of :pep:`667`.)
 
 Removed C APIs
 --------------
