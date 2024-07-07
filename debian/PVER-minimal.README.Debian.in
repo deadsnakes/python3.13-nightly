@@ -59,6 +59,7 @@ are:
   _tokenize		builtin
   _tracemalloc		extension
   _types		builtin
+  _typing		builtin
   _weakref		builtin
   _weakrefset		module
   _warnings		builtin
