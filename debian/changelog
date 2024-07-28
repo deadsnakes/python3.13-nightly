@@ -1,3 +1,9 @@
+python3.13 (3.13.0~b4-84-gc9b7e2d097-1+noble1) noble; urgency=medium
+
+  * Update to v3.13.0b4-84-gc9b7e2d097 (2024-07-28).
+
+ -- Anthony Sottile <asottile@umich.edu>  Sun, 28 Jul 2024 20:29:38 +0000
+
 python3.13 (3.13.0~b3-86-gc08a302249-1+noble1) noble; urgency=medium
 
   * Update to v3.13.0b3-86-gc08a302249 (2024-07-11).
