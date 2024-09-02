@@ -2,6 +2,7 @@ From: Anthony Sottile <asottile@umich.edu>
 Date: Fri, 2 Jun 2023 19:03:28 -0400
 Subject: actually, don't require autoconf 2.71
 
+this is only needed on ubuntu focal
 ---
  configure.ac | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
