@@ -1,7 +1,8 @@
 From: Anthony Sottile <asottile@umich.edu>
-Date: Sun, 14 Apr 2024 12:18:19 -0400
-Subject: disable a few xml tests
+Date: Mon, 2 Sep 2024 14:47:57 -0400
+Subject: disable several xml tests
 
+this is only needed on jammy and older
 ---
  Lib/test/test_sax.py       | 1 +
  Lib/test/test_xml_etree.py | 3 +++
