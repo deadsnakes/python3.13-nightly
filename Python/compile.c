@@ -119,6 +119,7 @@ enum fblocktype { WHILE_LOOP, FOR_LOOP, TRY_EXCEPT, FINALLY_TRY, FINALLY_END,
 struct fblockinfo {
     enum fblocktype fb_type;
     jump_target_label fb_block;
+    location fb_loc;
     /* (optional) type-specific exit or cleanup block */
     jump_target_label fb_exit;
     /* (optional) additional information required for unwinding */
@@ -1433,6 +1434,7 @@ compiler_push_fblock(struct compiler *c, location loc,
     f = &c->u->u_fblock[c->u->u_nfblocks++];
     f->fb_type = t;
     f->fb_block = block_label;
+    f->fb_loc = loc;
     f->fb_exit = exit;
     f->fb_datum = datum;
     return SUCCESS;
@@ -1560,7 +1562,7 @@ compiler_unwind_fblock(struct compiler *c, location *ploc,
 
         case WITH:
         case ASYNC_WITH:
-            *ploc = LOC((stmt_ty)info->fb_datum);
+            *ploc = info->fb_loc;
             ADDOP(c, *ploc, POP_BLOCK);
             if (preserve_tos) {
                 ADDOP_I(c, *ploc, SWAP, 2);
@@ -6036,7 +6038,7 @@ compiler_async_with(struct compiler *c, stmt_ty s, int pos)
 
     /* Evaluate EXPR */
     VISIT(c, expr, item->context_expr);
-
+    loc = LOC(item->context_expr);
     ADDOP(c, loc, BEFORE_ASYNC_WITH);
     ADDOP_I(c, loc, GET_AWAITABLE, 1);
     ADDOP_LOAD_CONST(c, loc, Py_None);
@@ -6134,7 +6136,7 @@ compiler_with(struct compiler *c, stmt_ty s, int pos)
     /* Evaluate EXPR */
     VISIT(c, expr, item->context_expr);
     /* Will push bound __exit__ */
-    location loc = LOC(s);
+    location loc = LOC(item->context_expr);
     ADDOP(c, loc, BEFORE_WITH);
     ADDOP_JUMP(c, loc, SETUP_WITH, final);
 
@@ -6167,7 +6169,6 @@ compiler_with(struct compiler *c, stmt_ty s, int pos)
     /* For successful outcome:
      * call __exit__(None, None, None)
      */
-    loc = LOC(s);
     RETURN_IF_ERROR(compiler_call_exit_with_nones(c, loc));
     ADDOP(c, loc, POP_TOP);
     ADDOP_JUMP(c, loc, JUMP, exit);
